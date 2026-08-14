@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useThemeStore } from "../../stores/themeStore";
+import { useViewStore } from "../../stores/viewStore";
 import { listModels } from "../../services/api";
 import { DEFAULT_MODEL } from "../../data/mockModels";
 
@@ -7,6 +8,7 @@ const USER_NAME = "Javier";
 
 export default function AccountMenu() {
   const { skin, mode, setSkin, setMode } = useThemeStore();
+  const { view, setView } = useViewStore();
   const [models, setModels] = useState<readonly string[]>([DEFAULT_MODEL]);
   const [model, setModel] = useState<string>(DEFAULT_MODEL);
   const [loggedOut, setLoggedOut] = useState(false);
@@ -74,6 +76,26 @@ export default function AccountMenu() {
               onClick={() => setMode("dark")}
             >
               {isTerminal ? "dark" : "Oscuro"}
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-row">
+          <span className="settings-label">{isTerminal ? "view" : "Vista"}</span>
+          <div className="settings-seg" role="group" aria-label="Vista">
+            <button
+              type="button"
+              aria-pressed={view === "chat"}
+              onClick={() => setView("chat")}
+            >
+              {isTerminal ? "chat" : "Chat"}
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === "stats"}
+              onClick={() => setView("stats")}
+            >
+              {isTerminal ? "stats" : "Estadísticas"}
             </button>
           </div>
         </div>

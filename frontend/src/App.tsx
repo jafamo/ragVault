@@ -1,11 +1,15 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { useThemeStore } from "./stores/themeStore";
+import { useViewStore } from "./stores/viewStore";
 import Header from "./components/Layout/Header";
 import Sidebar from "./components/Layout/Sidebar";
 import ChatWindow from "./components/Chat/ChatWindow";
 
+const StatsDashboard = lazy(() => import("./components/Stats/StatsDashboard"));
+
 export default function App() {
   const { skin, mode } = useThemeStore();
+  const { view } = useViewStore();
 
   useEffect(() => {
     if (mode) {
@@ -20,7 +24,13 @@ export default function App() {
       <Header />
       <div className="app-body">
         <Sidebar />
-        <ChatWindow />
+        {view === "stats" ? (
+          <Suspense fallback={<div className="stats-loading">Cargando estadísticas…</div>}>
+            <StatsDashboard />
+          </Suspense>
+        ) : (
+          <ChatWindow />
+        )}
       </div>
     </div>
   );
