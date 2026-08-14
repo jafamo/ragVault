@@ -15,3 +15,12 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
 ### Fixed
 
 ### Removed
+
+## [0.0.1] - 2026-08-14
+
+### Fixed
+
+- Corregido el patrón `data/` en `.gitignore`, que excluía sin querer
+  `frontend/src/data/` (incluyendo `mockModels.ts`) al no estar anclado a
+  la raíz del repo. Esto rompía el build de producción con Vite
+  (`Failed to resolve import "../../data/mockModels"`).
