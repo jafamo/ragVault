@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(ls*)",
+      "Bash(find*)",
+      "Bash(pytest*)",
+      "Bash(python -m pytest*)",
+      "Bash(ruff*)",
+      "Bash(mypy*)",
+      "Bash(uv run*)",
+      "Bash(uv pip*)",
+      "Bash(npm run*)",
+      "Bash(npm test*)",
+      "Bash(docker compose ps*)",
+      "Bash(docker compose logs*)"
+    ]
+  }
+}

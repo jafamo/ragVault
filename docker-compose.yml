@@ -1,0 +1,55 @@
+# Ollama corre en un contenedor externo ya desplegado en esta máquina —
+# no se define aquí, ver CLAUDE.md sección "Conexión a Ollama".
+services:
+  backend:
+    build: ./backend
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Linux
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+      # Futuro: montar carpeta de documentos de un NAS Synology (SMB/NFS)
+      # como fuente adicional de ingesta, en solo lectura. Ver
+      # openspec/changes/ para el change `document-source-synology` cuando
+      # se decida implementarlo.
+      #
+      # SMB (CIFS):
+      # - type: volume
+      #   source: synology-docs
+      #   target: /mnt/synology-docs
+      #   read_only: true
+      #
+      # NFS:
+      # - type: volume
+      #   source: synology-docs-nfs
+      #   target: /mnt/synology-docs
+      #   read_only: true
+
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "5173:5173"
+
+# Futuro: definir aquí el volumen SMB/NFS del Synology cuando se implemente
+# la fuente de documentos externa. Ejemplo (SMB/CIFS):
+#
+# volumes:
+#   synology-docs:
+#     driver: local
+#     driver_opts:
+#       type: cifs
+#       o: "username=<user>,password=<password>,vers=3.0,ro"
+#       device: "//<synology-ip>/<recurso-compartido>"
+#
+# Ejemplo (NFS):
+#
+# volumes:
+#   synology-docs-nfs:
+#     driver: local
+#     driver_opts:
+#       type: nfs
+#       o: "addr=<synology-ip>,ro,nolock,soft"
+#       device: ":/volume1/<recurso-compartido>"

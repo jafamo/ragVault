@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Env / secrets
+.env
+.env.local
+
+# Vector store / data
+*.sqlite3
+chroma_data/
+data/
+
+# Editors
+.vscode/
+.idea/
+.directory
+
+# Claude Code local settings (per-machine, not shared)
+.claude/settings.local.json
