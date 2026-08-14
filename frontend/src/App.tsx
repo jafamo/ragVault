@@ -1,32 +1,27 @@
-import { useEffect, useState } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-
-type HealthResponse = {
-  status: string;
-  ollama: "reachable" | "unreachable";
-};
+import { useEffect } from "react";
+import { useThemeStore } from "./stores/themeStore";
+import Header from "./components/Layout/Header";
+import Sidebar from "./components/Layout/Sidebar";
+import ChatWindow from "./components/Chat/ChatWindow";
 
 export default function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { skin, mode } = useThemeStore();
 
   useEffect(() => {
-    fetch(`${API_URL}/health`)
-      .then((res) => res.json())
-      .then(setHealth)
-      .catch(() => setError("No se pudo contactar con el backend"));
-  }, []);
+    if (mode) {
+      document.documentElement.setAttribute("data-theme", mode);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  }, [mode]);
 
   return (
-    <main>
-      <h1>RagVault</h1>
-      {error && <p>{error}</p>}
-      {health && (
-        <p>
-          Backend: {health.status} — Ollama: {health.ollama}
-        </p>
-      )}
-    </main>
+    <div className="app-shell" data-skin={skin}>
+      <Header />
+      <div className="app-body">
+        <Sidebar />
+        <ChatWindow />
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,61 @@
+@font-face { font-family: 'Fraunces Var'; font-weight: 100 900; font-style: normal; src: url('../assets/fonts/fraunces.woff2') format('woff2'); }
+@font-face { font-family: 'Public Sans Var'; font-weight: 100 900; font-style: normal; src: url('../assets/fonts/public-sans.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 400; font-style: normal; src: url('../assets/fonts/ibm-plex-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 500; font-style: normal; src: url('../assets/fonts/ibm-plex-mono-500.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono Var'; font-weight: 400 800; font-style: normal; src: url('../assets/fonts/jetbrains-mono.woff2') format('woff2'); }
+@font-face { font-family: 'Work Sans Var'; font-weight: 100 900; font-style: normal; src: url('../assets/fonts/work-sans.woff2') format('woff2'); }
+
+:root {
+  --page-bg: #f2efe7;
+  --page-surface: #ffffff;
+  --page-text: #1c1a16;
+  --page-text-dim: #6b6558;
+  --page-line: #dedad0;
+  --page-accent: #8a6a3d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page-bg: #121110;
+    --page-surface: #1a1917;
+    --page-text: #ece8df;
+    --page-text-dim: #9b9486;
+    --page-line: #2c2a26;
+    --page-accent: #c9a25f;
+  }
+}
+:root[data-theme="dark"] {
+  --page-bg: #121110;
+  --page-surface: #1a1917;
+  --page-text: #ece8df;
+  --page-text-dim: #9b9486;
+  --page-line: #2c2a26;
+  --page-accent: #c9a25f;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--page-bg);
+  color: var(--page-text);
+  font-family: 'Public Sans Var', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; }
+a { color: inherit; }
+
+.app-shell { display: flex; flex-direction: column; height: 100%; }
+
+.app-body { display: grid; grid-template-columns: 280px 1fr; flex: 1; min-height: 0; }
+
+.hist-row { position: relative; }
+.hist-title[contenteditable="true"] { outline: none; cursor: text; border-radius: 2px; }
+.hist-title[contenteditable="true"]:hover,
+.hist-title[contenteditable="true"]:focus { box-shadow: 0 1px 0 0 currentColor; }
+.hist-del {
+  position: absolute; top: 8px; right: 10px;
+  width: 16px; height: 16px; line-height: 14px; text-align: center;
+  border: none; border-radius: 50%; cursor: pointer;
+  font-size: 12px; padding: 0; opacity: 0; transition: opacity .1s ease;
+}
+@media (prefers-reduced-motion: reduce) { .hist-del { transition: none; } }
+.hist-row:hover .hist-del, .hist-del:focus-visible { opacity: 1; }
