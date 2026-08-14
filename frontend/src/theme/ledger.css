@@ -6,6 +6,13 @@
   --ln: #b7c7b4; --tx: #1c231d; --txd: #5b6b58;
   --brass: #1f7a72; --brass-hi: #146059;
   --verd: #4c7a52; --brick: #9c4433;
+  --chart-accent: var(--brass);
+  --chart-good: var(--verd);
+  --chart-warn: var(--brass-hi);
+  --chart-critical: var(--brick);
+  --chart-neutral: var(--txd);
+  --chart-grid: var(--ln);
+  --chart-text: var(--txd);
   font-family: 'Public Sans Var', sans-serif;
   color: var(--tx);
   background: var(--gr);

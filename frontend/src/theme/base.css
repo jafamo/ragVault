@@ -86,3 +86,52 @@ a { color: inherit; }
 .app-sidebar-narrow .deposit-sub { display: none; }
 .app-sidebar-narrow .deposit { padding: 10px 4px; }
 .app-sidebar-narrow .user-name { display: none; }
+
+/* Estadísticas — layout compartido entre skins; los colores de los
+   tokens --chart-* y de superficie/texto se definen por skin. */
+.stats-view { display: flex; flex-direction: column; gap: 20px; }
+.stats-title { margin: 0; font-size: 18px; }
+.stats-empty { color: var(--txd); font-size: 13px; margin: 8px 0; }
+.stats-loading { padding: 22px 26px; color: var(--page-text-dim); }
+
+.stats-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.stats-tile {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px;
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  border-left: 3px solid var(--chart-neutral);
+  border-radius: 4px;
+}
+.stats-tile-warn { border-left-color: var(--chart-warn); }
+.stats-tile-good { border-left-color: var(--chart-good); }
+.stats-tile-critical { border-left-color: var(--chart-critical); }
+.stats-tile-value { font-size: 24px; font-weight: 600; }
+.stats-tile-label { font-size: 12px; color: var(--txd); }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.stats-card {
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+.stats-card-title { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--txd); }
+
+.stats-table-wrap { overflow-x: auto; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.stats-table th, .stats-table td {
+  text-align: left; padding: 6px 10px;
+  border-bottom: 1px solid var(--ln);
+  white-space: nowrap;
+}
+.stats-table th { color: var(--txd); font-weight: 600; }
+.stats-table td:last-child { white-space: normal; color: var(--chart-critical); }

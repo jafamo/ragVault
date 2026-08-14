@@ -94,6 +94,41 @@ export interface ChatApiResponse {
   sources: SourceResponse[];
 }
 
+export interface ErrorDocumentResponse {
+  id: string;
+  filename: string;
+  format: string;
+  error_message: string | null;
+}
+
+async function getJson<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`);
+  if (!res.ok) {
+    throw new Error(`Error ${res.status} al consultar ${path}`);
+  }
+  return res.json();
+}
+
+export function getStatsByFormat(): Promise<Record<string, number>> {
+  return getJson("/stats/by-format");
+}
+
+export function getStatsByStatus(): Promise<Record<string, number>> {
+  return getJson("/stats/by-status");
+}
+
+export function getStatsErrors(): Promise<ErrorDocumentResponse[]> {
+  return getJson("/stats/errors");
+}
+
+export function getStatsTimeline(): Promise<Record<string, number>> {
+  return getJson("/stats/timeline");
+}
+
+export function getStatsByTag(): Promise<Record<string, number>> {
+  return getJson("/stats/by-tag");
+}
+
 export async function sendChatMessage(message: string): Promise<ChatApiResponse> {
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",

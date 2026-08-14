@@ -40,6 +40,12 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   estrecha de iconos por sesión, liberando ancho para el chat; en
   viewport móvil (≤768px) se colapsa automáticamente
   (`sidebar-collapse-history`).
+- Vista de estadísticas, accesible desde un control en el menú de Ajustes
+  que alterna entre chat y estadísticas: documentos por formato, por
+  estado (pendientes/procesados/con error, con el mensaje de error de
+  cada documento fallido), ingeridos por franja temporal (últimos 5, 15,
+  30, 90 y 365 días) y por tag. Incluye un modelo mínimo de tags
+  asignables manualmente a un documento (`document-statistics-dashboard`).
 
 ### Changed
 

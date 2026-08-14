@@ -35,3 +35,15 @@ class SourceResponse(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources: list[SourceResponse]
+
+class TagAssignRequest(BaseModel):
+    tags: list[str]
+
+class TagListResponse(BaseModel):
+    tags: list[str]
+
+class ErrorDocumentResponse(BaseModel):
+    id: str
+    filename: str
+    format: str
+    error_message: str | None

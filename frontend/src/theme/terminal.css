@@ -5,6 +5,13 @@
   --gr: #f6f4ee; --sf: #ffffff; --sf2: #eae6da;
   --ln: #d8d2c0; --tx: #1c1a16; --txd: #6d675a;
   --amb: #a6660f; --amb-hi: #8a5209; --cy: #2f6f68; --red: #a8402f;
+  --chart-accent: var(--amb);
+  --chart-good: var(--cy);
+  --chart-warn: var(--amb-hi);
+  --chart-critical: var(--red);
+  --chart-neutral: var(--txd);
+  --chart-grid: var(--ln);
+  --chart-text: var(--txd);
   font-family: 'Work Sans Var', sans-serif;
   color: var(--tx);
   background: var(--gr);

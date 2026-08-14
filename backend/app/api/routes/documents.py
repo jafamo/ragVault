@@ -8,8 +8,14 @@ from app.core.logging import get_logger
 from app.core.progress import progress_tracker
 from app.document_processing.ingestion_pipeline import run_ingestion
 from app.document_processing.loader_factory import UnsupportedFormatError, get_loader
-from app.models.schemas import DocumentResponse, DocumentStatusResponse
+from app.models.schemas import (
+    DocumentResponse,
+    DocumentStatusResponse,
+    TagAssignRequest,
+    TagListResponse,
+)
 from app.repositories.document_repo import DocumentRepository
+from app.repositories.tag_repo import TagRepository
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -62,3 +68,23 @@ async def get_document_status(document_id: str) -> DocumentStatusResponse:
         error_message=document.error_message,
         chunk_count=document.chunk_count,
     )
+
+@router.post("/documents/{document_id}/tags", response_model=TagListResponse)
+async def assign_document_tags(document_id: str, payload: TagAssignRequest) -> TagListResponse:
+    tag_repo = TagRepository()
+    tags = tag_repo.assign(document_id, payload.tags)
+    if tags is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    logger.info("document_tags_assigned", document_id=document_id, tags=tags)
+
+    return TagListResponse(tags=tags)
+
+@router.get("/documents/{document_id}/tags", response_model=TagListResponse)
+async def get_document_tags(document_id: str) -> TagListResponse:
+    tag_repo = TagRepository()
+    tags = tag_repo.list_for_document(document_id)
+    if tags is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    return TagListResponse(tags=tags)
