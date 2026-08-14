@@ -20,8 +20,8 @@ build/
 
 # Vector store / data
 *.sqlite3
-chroma_data/
-data/
+/chroma_data/
+/data/
 
 # Editors
 .vscode/
