@@ -22,6 +22,7 @@ build/
 *.sqlite3
 /chroma_data/
 /data/
+/backend/data/
 
 # Editors
 .vscode/

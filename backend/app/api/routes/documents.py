@@ -1,26 +1,27 @@
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile
+from starlette import status
 
 from app.core.logging import get_logger
+from app.core.progress import progress_tracker
+from app.document_processing.ingestion_pipeline import run_ingestion
 from app.document_processing.loader_factory import UnsupportedFormatError, get_loader
-from app.document_processing.splitter import split_documents
-from app.models.schemas import DocumentResponse
+from app.models.schemas import DocumentResponse, DocumentStatusResponse
 from app.repositories.document_repo import DocumentRepository
-from app.repositories.vector_store import VectorStoreRepository
 
 router = APIRouter()
 logger = get_logger(__name__)
 
 
-@router.post("/upload", response_model=DocumentResponse)
-async def upload_document(file: UploadFile) -> DocumentResponse:
+@router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_202_ACCEPTED)
+async def upload_document(file: UploadFile, background_tasks: BackgroundTasks) -> DocumentResponse:
     filename = file.filename or "documento"
     extension = Path(filename).suffix.lower()
 
     try:
-        loader = get_loader(filename)
+        get_loader(filename)
     except UnsupportedFormatError as exc:
         raise HTTPException(status_code=415, detail=str(exc)) from exc
 
@@ -28,24 +29,12 @@ async def upload_document(file: UploadFile) -> DocumentResponse:
         tmp.write(await file.read())
         tmp_path = tmp.name
 
-    try:
-        raw_documents = loader.load(tmp_path)
-        for doc in raw_documents:
-            doc.metadata["source"] = filename
-        chunks = split_documents(raw_documents)
-    finally:
-        Path(tmp_path).unlink(missing_ok=True)
-
     document_repo = DocumentRepository()
-    document = document_repo.create(
-        filename=filename, format=extension.lstrip("."), chunk_count=len(chunks)
-    )
+    document = document_repo.create(filename=filename, format=extension.lstrip("."))
 
-    if chunks:
-        vector_store = VectorStoreRepository()
-        vector_store.add_chunks(document.id, chunks)
+    background_tasks.add_task(run_ingestion, document.id, tmp_path, filename)
 
-    logger.info("document_ingested", filename=filename, chunk_count=len(chunks))
+    logger.info("document_queued", filename=filename, document_id=document.id)
 
     return DocumentResponse(
         id=document.id,
@@ -53,4 +42,23 @@ async def upload_document(file: UploadFile) -> DocumentResponse:
         format=document.format,
         chunk_count=document.chunk_count,
         uploaded_at=document.uploaded_at,
+        status=document.status,
+    )
+
+
+@router.get("/documents/{document_id}/status", response_model=DocumentStatusResponse)
+async def get_document_status(document_id: str) -> DocumentStatusResponse:
+    document_repo = DocumentRepository()
+    document = document_repo.get(document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    progress = progress_tracker.get(document_id)
+
+    return DocumentStatusResponse(
+        status=document.status,
+        stage=progress.stage if progress else None,
+        percent=progress.percent if progress else None,
+        error_message=document.error_message,
+        chunk_count=document.chunk_count,
     )

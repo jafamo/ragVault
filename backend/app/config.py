@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 200
     retrieval_top_k: int = 5
+    ingestion_max_retries: int = 3
     chroma_persist_dir: str = "./data/chroma"
     sqlite_path: str = "./data/ragvault.db"
 

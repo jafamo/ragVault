@@ -19,3 +19,5 @@ class Document(Base):
         DateTime, default=lambda: datetime.now(UTC)
     )
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String, default="queued")
+    error_message: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
