@@ -117,6 +117,8 @@ histórico se documenta en [CHANGELOG.md](CHANGELOG.md) con formato
 - **Base de datos relacional**: SQLite en MVP → PostgreSQL en producción.
 - **Frontend**: React + TypeScript, Tailwind CSS, Zustand, SSE para streaming
   de respuestas.
+- **Logging**: `structlog`, JSON estructurado a stdout — ver sección
+  "Logging (compatible con ELK)".
 
 ## Arquitectura y patrones
 
@@ -163,6 +165,39 @@ este proyecto ni asumas que hay que instalarlo. Desde otro contenedor se
 alcanza vía `http://host.docker.internal:11434` (con
 `extra_hosts: host.docker.internal:host-gateway` en Linux); si ambos
 contenedores comparten red Docker, se puede usar el nombre del servicio.
+
+## Logging (compatible con ELK)
+
+Ya existe un stack ELK (Elasticsearch/Logstash/Kibana) desplegado fuera de
+este repo — igual que Ollama, no lo gestionamos aquí. La única
+responsabilidad de la aplicación es emitir logs en un formato que ese stack
+externo pueda ingerir sin trabajo adicional:
+
+- **Formato**: JSON estructurado, un objeto por línea, siempre a **stdout**
+  (nunca a fichero local) — así el shipper externo (Filebeat/Logstash) los
+  recoge desde los logs del contenedor Docker sin configuración extra en
+  este proyecto.
+- **Librería**: `structlog` configurado con `JSONRenderer`, inicializado una
+  vez en `core/logging.py` (o `app/core/logging.py` según la estructura del
+  plan) y usado en vez de `print()` o `logging` estándar sin estructurar en
+  todo el backend.
+- **Campos obligatorios** en cada entrada: `timestamp` (ISO 8601 UTC),
+  `level`, `logger`/`event`, `message`. Campos contextuales cuando apliquen:
+  `request_id` (uno por request HTTP, vía middleware de FastAPI, para poder
+  seguir en Kibana todo el recorrido de una consulta: embed → retrieve →
+  generate), `session_id`, `document_id`.
+- **Uvicorn**: sustituir el logging de acceso por defecto por uno que
+  también emita JSON (no dejar el formato de texto plano de Uvicorn
+  conviviendo con el resto de logs estructurados).
+- **Nivel de log** configurable vía `Settings.log_level` (pydantic-settings,
+  variable `LOG_LEVEL`), no hardcodeado.
+- **No loguear secretos ni contenido sensible en `info`/`warning`/`error`**:
+  el contenido completo de prompts/respuestas del LLM, si se necesita para
+  debug, solo a nivel `debug`.
+- Esto es infraestructura transversal, no una feature aislada: debe quedar
+  resuelto en el primer `openspec change` de la Fase 1 (setup del proyecto),
+  antes o junto con el pipeline RAG básico — el resto de changes solo deben
+  añadir logs siguiendo esta convención, no reinventar el formato.
 
 ## Convenciones al implementar
 

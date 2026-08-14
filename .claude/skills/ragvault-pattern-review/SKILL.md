@@ -53,6 +53,16 @@ Para cada fichero cambiado, comprueba lo que aplique según su carpeta:
   (o su equivalente) se actualiza en el mismo change. Si no se actualiza,
   repórtalo como hallazgo bloqueante.
 
+**Logging**
+- No hay `print()` ni `logging` estándar sin estructurar — todo pasa por
+  `structlog` con `JSONRenderer`, a stdout (nunca a fichero local).
+- Ningún log de nivel `info`/`warning`/`error` incluye contenido completo de
+  prompts o respuestas del LLM ni secretos — eso, si hace falta, solo a
+  `debug`.
+- Si el código añade un nuevo punto de entrada HTTP o de procesamiento
+  relevante para trazabilidad (ingesta, consulta RAG), debe propagar
+  `request_id`/`session_id`/`document_id` en los logs, no solo el mensaje.
+
 **Configuración / Ollama**
 - No hay URLs de Ollama ni nombres de modelo hardcodeados fuera de
   `core/config.py` (`Settings` de pydantic-settings).
