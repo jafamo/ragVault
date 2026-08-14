@@ -6,11 +6,12 @@ TBD - created by archiving change chat-ui-shell. Update Purpose after archive.
 ### Requirement: Selector de identidad visual
 El sistema SHALL ofrecer un control (desplegable) que permita cambiar
 entre las identidades visuales "Ledger" y "Terminal" sin recargar la
-página, aplicando la identidad elegida a toda la interfaz de chat.
+página, aplicando la identidad elegida a toda la interfaz de chat. Este
+control vive en el menú de Ajustes (`AccountMenu`), no en la cabecera.
 
 #### Scenario: Cambiar de Ledger a Terminal
-- **WHEN** el usuario selecciona "Terminal" en el desplegable de diseño
-  estando en "Ledger"
+- **WHEN** el usuario abre Ajustes y selecciona "Terminal" estando en
+  "Ledger"
 - **THEN** la interfaz completa (cabecera, historial, chat, menú de
   cuenta) adopta inmediatamente la tipografía, colores y componentes de
   Terminal, sin recargar la página
@@ -18,7 +19,10 @@ página, aplicando la identidad elegida a toda la interfaz de chat.
 ### Requirement: Tema claro/oscuro independiente del diseño
 El sistema SHALL ofrecer un control de tema claro/oscuro que funcione con
 cualquiera de las dos identidades visuales, cambiando la paleta de esa
-identidad sin alterar cuál está seleccionada.
+identidad sin alterar cuál está seleccionada. La cabecera SHALL mostrar
+únicamente un icono único (sol/luna) que alterna entre claro y oscuro;
+el control con ambas opciones explícitas ("Claro"/"Oscuro") vive en
+Ajustes.
 
 #### Scenario: Alternar tema en Ledger
 - **WHEN** el usuario activa "Oscuro" estando en la identidad Ledger
@@ -30,11 +34,21 @@ identidad sin alterar cuál está seleccionada.
 - **THEN** Terminal cambia a su paleta clara (ámbar/cian oscurecidos sobre
   fondo papel) manteniendo la identidad Terminal activa
 
+#### Scenario: Icono único en la cabecera
+- **WHEN** el usuario pulsa el icono de tema en la cabecera
+- **THEN** el tema alterna entre claro y oscuro sin mostrar botones
+  separados "Claro"/"Oscuro" en la cabecera
+
 ### Requirement: Historial de sesiones editable
 El sistema SHALL permitir renombrar el título de una sesión del historial
 haciendo clic sobre él, y eliminar una sesión del historial mediante un
 control visible al pasar el ratón, operando sobre los datos de ejemplo en
-memoria.
+memoria. El panel de historial SHALL poder colapsarse a una tira estrecha
+de iconos por sesión (sin título) mediante un control visible, y
+expandirse de vuelta al listado completo; el estado colapsado/expandido
+persiste entre recargas de página. En viewport móvil (≤768px de ancho)
+el panel SHALL colapsarse automáticamente al cargar o al cruzar ese
+ancho, sin esperar a que el usuario pulse el control.
 
 #### Scenario: Renombrar una sesión
 - **WHEN** el usuario hace clic sobre el título de una sesión, edita el
@@ -46,15 +60,42 @@ memoria.
   historial
 - **THEN** esa sesión desaparece de la lista
 
+#### Scenario: Colapsar el historial
+- **WHEN** el usuario pulsa el control de colapsar del panel HISTORIAL
+- **THEN** el panel se reduce a una tira estrecha mostrando solo un
+  icono/inicial por sesión, el área de chat ocupa el ancho liberado, y
+  `TagFilter`/`UploadZone`/`AccountMenu` permanecen visibles debajo
+  (simplificados a lo esencial para caber en el ancho reducido, sin
+  texto cortado o desbordado)
+
+#### Scenario: Colapso automático en móvil
+- **WHEN** el usuario carga la aplicación, o redimensiona la ventana,
+  con un ancho de viewport ≤768px
+- **THEN** el panel de historial aparece colapsado sin que el usuario
+  tenga que pulsar el control; si lo expande manualmente puede seguir
+  usándolo expandido hasta el siguiente cruce de ese ancho
+
+#### Scenario: Expandir el historial colapsado
+- **WHEN** el usuario pulsa el control de expandir estando el panel
+  colapsado
+- **THEN** el panel vuelve a mostrar el listado completo de sesiones con
+  título y categoría
+
+#### Scenario: El estado colapsado persiste
+- **WHEN** el usuario colapsa el historial y recarga la página
+- **THEN** el panel se muestra colapsado al cargar, sin necesidad de
+  volver a pulsar el control
+
 ### Requirement: Menú de cuenta con nombre de usuario
 El sistema SHALL mostrar, en el punto donde antes había un rótulo genérico
 de "Ajustes", el nombre del usuario logueado como control que abre un
-menú con: selector de tema, selector de modelo y acción de cerrar sesión.
+menú con: selector de identidad visual (diseño), selector de tema,
+selector de modelo y acción de cerrar sesión.
 
 #### Scenario: Abrir el menú de cuenta
 - **WHEN** el usuario hace clic sobre su nombre en la barra lateral
-- **THEN** se despliega un panel con el tema actual, el modelo
-  seleccionado y un botón "Cerrar sesión"
+- **THEN** se despliega un panel con el diseño actual, el tema actual, el
+  modelo seleccionado y un botón "Cerrar sesión"
 
 #### Scenario: Cerrar sesión es un stub visual
 - **WHEN** el usuario pulsa "Cerrar sesión"
