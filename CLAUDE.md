@@ -160,11 +160,15 @@ ingesta de lo que aparezca en esa carpeta.
 ## Conexión a Ollama
 
 Ollama corre en un contenedor Docker **externo e independiente**, ya
-desplegado en la misma máquina — nunca lo incluyas en `docker-compose.yml` de
-este proyecto ni asumas que hay que instalarlo. Desde otro contenedor se
-alcanza vía `http://host.docker.internal:11434` (con
-`extra_hosts: host.docker.internal:host-gateway` en Linux); si ambos
-contenedores comparten red Docker, se puede usar el nombre del servicio.
+desplegado — nunca lo incluyas en `docker-compose.yml` de este proyecto ni
+asumas que hay que instalarlo. Puede estar en la misma máquina
+(`http://host.docker.internal:11434`, con
+`extra_hosts: host.docker.internal:host-gateway` en Linux) o en otra
+máquina de la LAN (URL/IP directa) — el endpoint real no está hardcodeado
+en ningún fichero versionado, se configura vía `OLLAMA_BASE_URL` en `.env`
+(ver `.env.example` para el valor por defecto de referencia). Igual para
+`OLLAMA_MODEL`/`OLLAMA_EMBED_MODEL`: el modelo concreto en uso es una
+elección de entorno, no una constante del código.
 
 ## Logging (compatible con ELK)
 

@@ -1,12 +1,16 @@
-# Ollama corre en un contenedor externo ya desplegado en esta máquina —
-# no se define aquí, ver CLAUDE.md sección "Conexión a Ollama".
+# Ollama es un servicio externo (mismo host u otra máquina de la LAN, ya
+# desplegado) — no se define aquí. Ver CLAUDE.md sección "Conexión a
+# Ollama". Valores reales en .env (ver .env.example).
 services:
-  backend:
+  ragvault-backend:
     build: ./backend
     environment:
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      - OLLAMA_EMBED_MODEL=${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     extra_hosts:
-      - "host.docker.internal:host-gateway" # Linux
+      - "host.docker.internal:host-gateway" # Linux, solo aplica si Ollama está en el mismo host
     ports:
       - "8000:8000"
     volumes:
@@ -28,10 +32,16 @@ services:
       #   target: /mnt/synology-docs
       #   read_only: true
 
-  # frontend:
-  #   build: ./frontend
-  #   ports:
-  #     - "5173:5173"
+  ragvault-frontend:
+    build: ./frontend
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    ports:
+      - "9009:5173" # acceso web: http://localhost:9009
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - ragvault-backend
 
 # Futuro: definir aquí el volumen SMB/NFS del Synology cuando se implemente
 # la fuente de documentos externa. Ejemplo (SMB/CIFS):
