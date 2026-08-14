@@ -36,6 +36,12 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
 
 ### Fixed
 
+- `VITE_API_URL` del frontend ahora es configurable vía `.env` en lugar de
+  estar fijado a `http://localhost:8000` en `docker-compose.yml`. Con el
+  valor fijo, acceder a la UI desde otro equipo de la LAN hacía que el
+  navegador intentase llamar a su propio `localhost`, mostrando "Ollama no
+  disponible" y "Failed to fetch" en el chat.
+
 ### Removed
 
 ## [0.0.1] - 2026-08-14

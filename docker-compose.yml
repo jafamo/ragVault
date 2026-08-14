@@ -36,7 +36,7 @@ services:
   ragvault-frontend:
     build: ./frontend
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
     ports:
       - "9009:5173" # acceso web: http://localhost:9009
     volumes:
