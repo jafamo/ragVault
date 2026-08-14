@@ -23,8 +23,16 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   documentos y menú de cuenta con selector de modelo Ollama
   (`chat-ui-shell`). Todavía sobre datos de ejemplo — sin conexión real al
   pipeline RAG.
+- Ingesta real de PDF (`POST /upload`) y chat con RAG real contra Ollama
+  (`POST /chat`): chunking, embeddings e indexación en ChromaDB, con
+  fuentes citadas reales en la UI de chat (`rag-pipeline-basico`). Cierra
+  el MVP de la Fase 1 del plan.
 
 ### Changed
+
+- El chat de la UI deja de mostrar un mensaje de maqueta y llama al
+  pipeline RAG real, con estado de carga y de error explícito
+  (`rag-pipeline-basico`).
 
 ### Fixed
 

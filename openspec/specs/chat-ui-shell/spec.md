@@ -74,15 +74,24 @@ endpoint (no existe todavía).
 
 ### Requirement: Chat honesto sobre ser una maqueta
 El sistema SHALL permitir escribir y enviar un mensaje en el input de
-chat, añadiéndolo al hilo de la sesión activa, y SHALL responder con un
-mensaje de marcador de posición visualmente distinguible de una respuesta
-real, sin generar ni simular contenido de un LLM.
+chat, añadirlo al hilo de la sesión activa y enviarlo al pipeline RAG
+real (`POST /chat`), mostrando un estado de carga mientras espera
+respuesta. SHALL mostrar la respuesta real del LLM con sus fuentes
+citadas cuando la petición tenga éxito, y SHALL mostrar un mensaje de
+error explícito, sin inventar contenido, si el backend o Ollama no
+responden — el chat nunca fabrica ni simula una respuesta.
 
-#### Scenario: Enviar un mensaje
-- **WHEN** el usuario escribe un mensaje y lo envía
+#### Scenario: Enviar un mensaje con éxito
+- **WHEN** el usuario escribe un mensaje, lo envía, y el backend responde
+  con éxito a `POST /chat`
 - **THEN** el mensaje aparece en el hilo como mensaje de usuario, seguido
-  de un mensaje de sistema que indica explícitamente que no hay pipeline
-  RAG conectado todavía
+  de la respuesta real del pipeline RAG con sus fuentes citadas
+
+#### Scenario: Fallo del backend o de Ollama
+- **WHEN** la llamada a `POST /chat` falla o el backend indica que Ollama
+  no está disponible
+- **THEN** el hilo muestra un mensaje de error explícito, distinguible
+  visualmente de una respuesta real, sin generar contenido simulado
 
 ### Requirement: Health check integrado en la cabecera
 El sistema SHALL seguir realizando la llamada real a `GET /health` del
