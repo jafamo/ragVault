@@ -7,9 +7,10 @@ interface Props {
   index: number;
   total: number;
   active: boolean;
+  collapsed?: boolean;
 }
 
-export default function SessionItem({ session, index, total, active }: Props) {
+export default function SessionItem({ session, index, total, active, collapsed = false }: Props) {
   const { setActive, renameSession, deleteSession } = useSessionsStore();
   const skin = useThemeStore((s) => s.skin);
   const titleRef = useRef<HTMLSpanElement>(null);
@@ -19,6 +20,20 @@ export default function SessionItem({ session, index, total, active }: Props) {
   function commitTitle() {
     const text = titleRef.current?.textContent ?? "";
     renameSession(session.id, text);
+  }
+
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        className={`hist-row-collapsed${active ? " active" : ""}`}
+        title={session.title}
+        aria-label={session.title}
+        onClick={() => setActive(session.id)}
+      >
+        {session.title.trim().charAt(0).toUpperCase() || "?"}
+      </button>
+    );
   }
 
   if (skin === "terminal") {
