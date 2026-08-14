@@ -15,6 +15,10 @@ dependencies = [
     "langchain-ollama",
     "chromadb",
     "pypdf",
+    "python-docx",
+    "openpyxl",
+    "odfpy",
+    "python-pptx",
     "sqlalchemy",
     "python-multipart",
 ]

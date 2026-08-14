@@ -9,6 +9,7 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
       - OLLAMA_EMBED_MODEL=${OLLAMA_EMBED_MODEL:-nomic-embed-text}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - INGESTION_MAX_RETRIES=${INGESTION_MAX_RETRIES:-3}
     extra_hosts:
       - "host.docker.internal:host-gateway" # Linux, solo aplica si Ollama está en el mismo host
     ports:

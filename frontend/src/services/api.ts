@@ -24,15 +24,59 @@ export interface DocumentResponse {
   format: string;
   chunk_count: number;
   uploaded_at: string;
+  status: string;
 }
 
-export async function uploadDocument(file: File): Promise<DocumentResponse> {
+export interface DocumentStatusResponse {
+  status: string;
+  stage: string | null;
+  percent: number | null;
+  error_message: string | null;
+  chunk_count: number;
+}
+
+export function uploadDocument(
+  file: File,
+  onUploadProgress?: (percent: number) => void,
+): Promise<DocumentResponse> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_URL}/upload`);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onUploadProgress) {
+        onUploadProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      let body: unknown = {};
+      try {
+        body = JSON.parse(xhr.responseText);
+      } catch {
+        // respuesta no-JSON, se maneja como error genérico abajo
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(body as DocumentResponse);
+      } else {
+        const detail = (body as { detail?: string }).detail;
+        reject(new Error(detail ?? `Error ${xhr.status} al subir el documento`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Error de red al subir el documento"));
+
+    xhr.send(formData);
+  });
+}
+
+export async function getDocumentStatus(documentId: string): Promise<DocumentStatusResponse> {
+  const res = await fetch(`${API_URL}/documents/${documentId}/status`);
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail ?? `Error ${res.status} al subir el documento`);
+    throw new Error(`Error ${res.status} al consultar el estado del documento`);
   }
   return res.json();
 }

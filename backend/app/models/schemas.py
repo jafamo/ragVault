@@ -9,6 +9,15 @@ class DocumentResponse(BaseModel):
     format: str
     chunk_count: int
     uploaded_at: datetime
+    status: str
+
+
+class DocumentStatusResponse(BaseModel):
+    status: str
+    stage: str | None = None
+    percent: int | None = None
+    error_message: str | None = None
+    chunk_count: int
 
 
 class ChatRequest(BaseModel):

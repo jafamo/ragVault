@@ -27,12 +27,24 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   (`POST /chat`): chunking, embeddings e indexación en ChromaDB, con
   fuentes citadas reales en la UI de chat (`rag-pipeline-basico`). Cierra
   el MVP de la Fase 1 del plan.
+- Ingesta multi-formato: además de PDF, ahora se pueden subir documentos
+  Word (`.docx`, `.odt`), hojas de cálculo (`.xlsx`, `.ods`, `.csv`),
+  texto (`.md`, `.txt`) y presentaciones PowerPoint (`.pptx`, `.ppt`,
+  esta última convertida internamente con LibreOffice). La subida muestra
+  dos barras de progreso independientes — transferencia del fichero e
+  indexado en segundo plano —, con reintentos automáticos configurables
+  ante fallos transitorios y mensajes de error específicos por formato
+  cuando un fichero está corrupto o no se puede parsear
+  (`document-ingestion-multiformat`).
 
 ### Changed
 
 - El chat de la UI deja de mostrar un mensaje de maqueta y llama al
   pipeline RAG real, con estado de carga y de error explícito
   (`rag-pipeline-basico`).
+- `POST /upload` deja de esperar a que termine toda la ingesta: confirma
+  la recepción del fichero al momento y procesa el resto en segundo plano
+  (`document-ingestion-multiformat`).
 
 ### Fixed
 
