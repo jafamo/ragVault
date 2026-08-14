@@ -10,6 +10,14 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
 
 ### Added
 
+- Esqueleto inicial del backend (FastAPI) y frontend (React + Vite), con
+  `GET /health` que comprueba la conectividad con Ollama
+  (`project-bootstrap`).
+- Logging estructurado en JSON a stdout, correlacionado por `request_id`
+  por petición, compatible con el stack ELK externo (`project-bootstrap`).
+- Servicios Docker `ragvault-backend` (puerto 8000) y `ragvault-frontend`
+  (puerto 9009, acceso web) (`project-bootstrap`).
+
 ### Changed
 
 ### Fixed
