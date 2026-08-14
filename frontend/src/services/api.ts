@@ -17,3 +17,47 @@ export async function health(): Promise<HealthResponse> {
 export async function listModels(): Promise<readonly string[]> {
   return MOCK_MODELS;
 }
+
+export interface DocumentResponse {
+  id: string;
+  filename: string;
+  format: string;
+  chunk_count: number;
+  uploaded_at: string;
+}
+
+export async function uploadDocument(file: File): Promise<DocumentResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail ?? `Error ${res.status} al subir el documento`);
+  }
+  return res.json();
+}
+
+export interface SourceResponse {
+  document_id: string;
+  document_name: string;
+  page: number | null;
+  chunk_text: string;
+  similarity_score: number;
+}
+
+export interface ChatApiResponse {
+  answer: string;
+  sources: SourceResponse[];
+}
+
+export async function sendChatMessage(message: string): Promise<ChatApiResponse> {
+  const res = await fetch(`${API_URL}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    throw new Error(`Error ${res.status} al consultar el backend`);
+  }
+  return res.json();
+}

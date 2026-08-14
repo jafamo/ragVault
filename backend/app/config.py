@@ -7,6 +7,12 @@ class Settings(BaseSettings):
     ollama_embed_model: str = "nomic-embed-text"
     log_level: str = "INFO"
 
+    chunk_size: int = 1000
+    chunk_overlap: int = 200
+    retrieval_top_k: int = 5
+    chroma_persist_dir: str = "./data/chroma"
+    sqlite_path: str = "./data/ragvault.db"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

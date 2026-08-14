@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { sendChatMessage } from "../services/api";
 
 export interface Source {
   doc: string;
@@ -8,7 +9,7 @@ export interface Source {
 
 export interface Message {
   id: string;
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant" | "system" | "error";
   text: string;
   meta: string;
   sources?: Source[];
@@ -41,35 +42,72 @@ function nextId() {
   return `local-${counter}`;
 }
 
-interface ChatState {
-  messagesBySession: Record<string, Message[]>;
-  sendMessage: (sessionId: string, text: string) => void;
+function appendMessage(
+  messagesBySession: Record<string, Message[]>,
+  sessionId: string,
+  message: Message
+): Record<string, Message[]> {
+  const existing = messagesBySession[sessionId] ?? [];
+  return { ...messagesBySession, [sessionId]: [...existing, message] };
 }
 
-export const useChatStore = create<ChatState>((set) => ({
+interface ChatState {
+  messagesBySession: Record<string, Message[]>;
+  pendingSessionId: string | null;
+  sendMessage: (sessionId: string, text: string) => Promise<void>;
+}
+
+export const useChatStore = create<ChatState>((set, get) => ({
   messagesBySession: initialMessages,
-  sendMessage: (sessionId, text) =>
-    set((state) => {
-      const trimmed = text.trim();
-      if (!trimmed) return state;
-      const existing = state.messagesBySession[sessionId] ?? [];
-      const userMessage: Message = {
+  pendingSessionId: null,
+  sendMessage: async (sessionId, text) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    const userMessage: Message = {
+      id: nextId(),
+      role: "user",
+      text: trimmed,
+      meta: "tú · ahora",
+    };
+    set((state) => ({
+      messagesBySession: appendMessage(state.messagesBySession, sessionId, userMessage),
+      pendingSessionId: sessionId,
+    }));
+
+    try {
+      const response = await sendChatMessage(trimmed);
+      const assistantMessage: Message = {
         id: nextId(),
-        role: "user",
-        text: trimmed,
-        meta: "tú · ahora",
+        role: "assistant",
+        text: response.answer,
+        meta: "asistente · ahora",
+        sources: response.sources.map((s) => ({
+          doc: s.document_name,
+          page: s.page != null ? `pág. ${s.page}` : "—",
+          score: s.similarity_score,
+        })),
       };
-      const systemMessage: Message = {
+      set((state) => ({
+        messagesBySession: appendMessage(state.messagesBySession, sessionId, assistantMessage),
+      }));
+    } catch (err) {
+      const errorMessage: Message = {
         id: nextId(),
-        role: "system",
-        text: "Vista previa — sin pipeline RAG conectado todavía.",
-        meta: "sistema",
+        role: "error",
+        text:
+          err instanceof Error
+            ? err.message
+            : "No se pudo contactar con el backend. Inténtalo de nuevo.",
+        meta: "error",
       };
-      return {
-        messagesBySession: {
-          ...state.messagesBySession,
-          [sessionId]: [...existing, userMessage, systemMessage],
-        },
-      };
-    }),
+      set((state) => ({
+        messagesBySession: appendMessage(state.messagesBySession, sessionId, errorMessage),
+      }));
+    } finally {
+      if (get().pendingSessionId === sessionId) {
+        set({ pendingSessionId: null });
+      }
+    }
+  },
 }));

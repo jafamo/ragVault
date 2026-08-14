@@ -9,6 +9,14 @@ dependencies = [
     "pydantic-settings",
     "structlog",
     "httpx",
+    "langchain",
+    "langchain-community",
+    "langchain-chroma",
+    "langchain-ollama",
+    "chromadb",
+    "pypdf",
+    "sqlalchemy",
+    "python-multipart",
 ]
 
 [project.optional-dependencies]

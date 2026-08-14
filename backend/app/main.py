@@ -1,17 +1,28 @@
 import uuid
+from contextlib import asynccontextmanager
 
 import httpx
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.chat import router as chat_router
+from app.api.routes.documents import router as documents_router
 from app.config import settings
 from app.core.logging import configure_logging, get_logger
+from app.repositories.document_repo import init_db
 
 configure_logging()
 logger = get_logger(__name__)
 
-app = FastAPI(title="RagVault")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="RagVault", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +30,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(documents_router)
+app.include_router(chat_router)
 
 
 @app.middleware("http")

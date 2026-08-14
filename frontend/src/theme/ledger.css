@@ -99,6 +99,9 @@
 [data-skin="ledger"] .entry-body { font-size: 14.5px; line-height: 1.6; }
 [data-skin="ledger"] .entry.assistant .entry-body { border-top: 1px solid var(--brass); padding-top: 10px; }
 [data-skin="ledger"] .entry.system .entry-body { font-family: 'IBM Plex Mono'; font-size: 11.5px; color: var(--txd); font-style: italic; }
+[data-skin="ledger"] .entry.error { max-width: 100%; }
+[data-skin="ledger"] .entry.error .entry-meta { color: var(--brick); }
+[data-skin="ledger"] .entry.error .entry-body { font-family: 'IBM Plex Mono'; font-size: 12px; color: var(--brick); border-left: 2px solid var(--brick); padding-left: 10px; }
 
 [data-skin="ledger"] .receipt { margin-top: 14px; border-top: 1px dashed var(--ln); padding-top: 12px; }
 [data-skin="ledger"] .receipt-title { font-family:'IBM Plex Mono'; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--txd); margin-bottom: 8px; }

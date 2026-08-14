@@ -84,6 +84,8 @@
 [data-skin="terminal"] .entry.user .entry-meta { color: var(--amb); }
 [data-skin="terminal"] .entry.assistant .entry-meta { color: var(--cy); }
 [data-skin="terminal"] .entry.system .entry-meta { color: var(--red); }
+[data-skin="terminal"] .entry.error .entry-meta { color: var(--red); }
+[data-skin="terminal"] .entry.error .entry-body { border-left-color: var(--red); color: var(--red); }
 [data-skin="terminal"] .entry-body { padding-left: 16px; border-left: 2px solid var(--ln); }
 
 [data-skin="terminal"] .receipt { margin-top: 8px; padding-left: 16px; font-family:'JetBrains Mono Var'; font-size: 11px; color: var(--txd); }

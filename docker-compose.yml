@@ -15,6 +15,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
+      - ./backend/data:/app/data
       # Futuro: montar carpeta de documentos de un NAS Synology (SMB/NFS)
       # como fuente adicional de ingesta, en solo lectura. Ver
       # openspec/changes/ para el change `document-source-synology` cuando
