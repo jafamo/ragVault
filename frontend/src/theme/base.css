@@ -46,6 +46,28 @@ a { color: inherit; }
 .app-shell { display: flex; flex-direction: column; height: 100%; }
 
 .app-body { display: grid; grid-template-columns: 280px 1fr; flex: 1; min-height: 0; }
+.app-body:has(.app-sidebar-narrow) { grid-template-columns: 64px 1fr; }
+@media (prefers-reduced-motion: no-preference) {
+  .app-sidebar { transition: width .15s ease; }
+}
+
+.side-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hist-toggle {
+  flex: none; width: 20px; height: 20px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer; font-size: 12px; line-height: 1;
+}
+.theme-toggle {
+  flex: none; width: 26px; height: 26px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; cursor: pointer; font-size: 13px; line-height: 1;
+}
+.hist-row-collapsed {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; margin: 0 auto 6px;
+  border: none; border-radius: 4px; cursor: pointer;
+  font-size: 12px; font-weight: 600; padding: 0;
+}
 
 .hist-row { position: relative; }
 .hist-title[contenteditable="true"] { outline: none; cursor: text; border-radius: 2px; }
@@ -59,3 +81,8 @@ a { color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) { .hist-del { transition: none; } }
 .hist-row:hover .hist-del, .hist-del:focus-visible { opacity: 1; }
+
+.app-sidebar-narrow .deposit-label,
+.app-sidebar-narrow .deposit-sub { display: none; }
+.app-sidebar-narrow .deposit { padding: 10px 4px; }
+.app-sidebar-narrow .user-name { display: none; }

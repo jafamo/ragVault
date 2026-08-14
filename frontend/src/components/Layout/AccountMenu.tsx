@@ -6,7 +6,7 @@ import { DEFAULT_MODEL } from "../../data/mockModels";
 const USER_NAME = "Javier";
 
 export default function AccountMenu() {
-  const { skin, mode, setMode } = useThemeStore();
+  const { skin, mode, setSkin, setMode } = useThemeStore();
   const [models, setModels] = useState<readonly string[]>([DEFAULT_MODEL]);
   const [model, setModel] = useState<string>(DEFAULT_MODEL);
   const [loggedOut, setLoggedOut] = useState(false);
@@ -28,7 +28,7 @@ export default function AccountMenu() {
         {isTerminal ? (
           <span className="user-chip">
             <span className="proc-dot" style={{ marginTop: 0 }} />
-            javier@ragvault
+            <span className="user-name">javier@ragvault</span>
           </span>
         ) : (
           <span className="user-chip">
@@ -38,6 +38,26 @@ export default function AccountMenu() {
         )}
       </summary>
       <div className="settings-panel">
+        <div className="settings-row">
+          <span className="settings-label">{isTerminal ? "skin" : "Diseño"}</span>
+          <div className="settings-seg" role="group" aria-label="Diseño">
+            <button
+              type="button"
+              aria-pressed={skin === "ledger"}
+              onClick={() => setSkin("ledger")}
+            >
+              Ledger
+            </button>
+            <button
+              type="button"
+              aria-pressed={skin === "terminal"}
+              onClick={() => setSkin("terminal")}
+            >
+              Terminal
+            </button>
+          </div>
+        </div>
+
         <div className="settings-row">
           <span className="settings-label">{isTerminal ? "theme" : "Tema"}</span>
           <div className="settings-seg" role="group" aria-label="Tema de color">

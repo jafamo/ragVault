@@ -36,9 +36,17 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   ante fallos transitorios y mensajes de error específicos por formato
   cuando un fichero está corrupto o no se puede parsear
   (`document-ingestion-multiformat`).
+- El panel HISTORIAL de la barra lateral se puede colapsar a una tira
+  estrecha de iconos por sesión, liberando ancho para el chat; en
+  viewport móvil (≤768px) se colapsa automáticamente
+  (`sidebar-collapse-history`).
 
 ### Changed
 
+- El selector de identidad visual (Ledger/Terminal) se mueve de la
+  cabecera al menú de Ajustes; la cabecera pasa a mostrar solo un icono
+  único para alternar entre tema claro y oscuro
+  (`sidebar-collapse-history`).
 - El chat de la UI deja de mostrar un mensaje de maqueta y llama al
   pipeline RAG real, con estado de carga y de error explícito
   (`rag-pipeline-basico`).
