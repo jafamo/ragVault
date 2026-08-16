@@ -46,7 +46,7 @@
 [data-skin="ledger"] .theme-toggle { background: var(--sf2); color: var(--brass); border: 1px solid var(--ln); }
 [data-skin="ledger"] .theme-toggle:hover { background: var(--brass); color: var(--sf); }
 
-[data-skin="ledger"] .app-sidebar { background: var(--sf); border-right: 1px solid var(--ln); padding: 20px 0; overflow-y: auto; }
+[data-skin="ledger"] .app-sidebar { background: var(--sf); border-right: 1px solid var(--ln); padding: 20px 0; }
 [data-skin="ledger"] .side-label { font-family:'IBM Plex Mono'; font-size: 10.5px; letter-spacing:.12em; text-transform: uppercase; color: var(--txd); padding: 0 20px; margin-bottom: 10px; }
 [data-skin="ledger"] .ledger-row { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: baseline; padding: 10px 20px; border-bottom: 1px solid var(--ln); cursor: pointer; }
 [data-skin="ledger"] .ledger-row.active { border-left: 2px solid var(--brass); background: var(--sf2); }
@@ -66,6 +66,12 @@
 [data-skin="ledger"] .hist-new:hover { background: var(--brass); color: var(--sf); }
 [data-skin="ledger"] .hist-row-collapsed { background: var(--sf2); color: var(--txd); font-family: 'IBM Plex Mono'; }
 [data-skin="ledger"] .hist-row-collapsed.active { background: var(--brass); color: var(--sf); }
+[data-skin="ledger"] .hist-preview-toggle { color: var(--txd); }
+[data-skin="ledger"] .hist-preview { border-left: 2px solid var(--ln); margin-left: 8px; }
+[data-skin="ledger"] .hist-preview-role { color: var(--brass); font-family: 'IBM Plex Mono'; }
+[data-skin="ledger"] .hist-preview-text { color: var(--tx); }
+[data-skin="ledger"] .hist-preview-open { border: 1px solid var(--brass); background: none; color: var(--brass); }
+[data-skin="ledger"] .hist-preview-open:hover { background: var(--brass); color: var(--sf); }
 
 [data-skin="ledger"] .tag-strip { display: flex; flex-wrap: wrap; gap: 6px; padding: 16px 20px; border-bottom: 1px solid var(--ln); margin-bottom: 16px; }
 [data-skin="ledger"] .tag-chip { border: 1px solid var(--ln); font-family:'IBM Plex Mono'; font-size: 10.5px; padding: 3px 8px; color: var(--txd); background: none; cursor: default; }

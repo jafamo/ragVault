@@ -24,7 +24,9 @@ export default function Sidebar() {
 
   return (
     <aside className={`app-sidebar${historyCollapsed ? " app-sidebar-narrow" : ""}`}>
-      <SessionList />
+      <div className="app-sidebar-sessions">
+        <SessionList />
+      </div>
       <TagFilter />
       <UploadZone />
       <AccountMenu />
