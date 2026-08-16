@@ -8,15 +8,20 @@ export default function ChatWindow() {
   const activeId = useSessionsStore((s) => s.activeId);
   const messages = useChatStore((s) => s.messagesBySession[activeId] ?? []);
   const loadMessages = useChatStore((s) => s.loadMessages);
+  const cancelStream = useChatStore((s) => s.cancelStream);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (activeId) loadMessages(activeId);
-  }, [activeId, loadMessages]);
+    return () => {
+      if (activeId) cancelStream(activeId);
+    };
+  }, [activeId, loadMessages, cancelStream]);
 
+  const lastMessageLength = messages.length > 0 ? messages[messages.length - 1].text.length : 0;
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+  }, [messages.length, lastMessageLength]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}>

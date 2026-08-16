@@ -1,6 +1,6 @@
 from langchain_core.documents import Document
 
-from app.core.rag_pipeline import NO_DOCUMENTS_ANSWER, run_pipeline
+from app.core.rag_pipeline import NO_DOCUMENTS_ANSWER, make_generate_step_stream, run_pipeline
 
 
 class FakeVectorStore:
@@ -24,6 +24,15 @@ class FakeLLM:
     def invoke(self, prompt):
         self.last_prompt = prompt
         return FakeMessage(self._answer)
+
+
+class FakeStreamingLLM:
+    def __init__(self, chunks):
+        self._chunks = chunks
+
+    async def astream(self, prompt):
+        for chunk in self._chunks:
+            yield FakeMessage(chunk)
 
 
 def test_pipeline_returns_answer_and_sources_when_documents_found():
@@ -52,3 +61,13 @@ def test_pipeline_does_not_call_llm_without_indexed_documents():
     assert answer == NO_DOCUMENTS_ANSWER
     assert sources == []
     assert llm.last_prompt is None
+
+
+async def test_generate_step_stream_yields_chunks_in_order():
+    llm = FakeStreamingLLM(["La ", "respuesta ", "es 90 días."])
+    generate_step_stream = make_generate_step_stream(llm)
+
+    chunks = [chunk async for chunk in generate_step_stream({"prompt": "¿Cuál es el preaviso?"})]
+
+    assert chunks == ["La ", "respuesta ", "es 90 días."]
+    assert "".join(chunks) == "La respuesta es 90 días."

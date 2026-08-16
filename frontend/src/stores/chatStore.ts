@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { getSessionMessages, sendChatMessage, type MessageApiResponse } from "../services/api";
+import {
+  getSessionMessages,
+  sendChatMessage,
+  type ChatDoneEvent,
+  type MessageApiResponse,
+} from "../services/api";
 import { useModelStore } from "./modelStore";
 
 export interface Source {
@@ -14,6 +19,15 @@ export interface Message {
   text: string;
   meta: string;
   sources?: Source[];
+  streaming?: boolean;
+}
+
+function sourcesFromDoneEvent(payload: ChatDoneEvent): Source[] {
+  return payload.sources.map((s) => ({
+    doc: s.document_name,
+    page: s.page != null ? `pág. ${s.page}` : "—",
+    score: s.similarity_score,
+  }));
 }
 
 let counter = 0;
@@ -58,18 +72,37 @@ function appendMessage(
   return { ...messagesBySession, [sessionId]: [...existing, message] };
 }
 
+function updateMessage(
+  messagesBySession: Record<string, Message[]>,
+  sessionId: string,
+  messageId: string,
+  update: (message: Message) => Message
+): Record<string, Message[]> {
+  const existing = messagesBySession[sessionId] ?? [];
+  return {
+    ...messagesBySession,
+    [sessionId]: existing.map((m) => (m.id === messageId ? update(m) : m)),
+  };
+}
+
 interface ChatState {
   messagesBySession: Record<string, Message[]>;
   loadedSessions: Record<string, boolean>;
   pendingSessionId: string | null;
+  streamControllers: Record<string, AbortController>;
   loadMessages: (sessionId: string) => Promise<void>;
   sendMessage: (sessionId: string, text: string) => Promise<void>;
+  cancelStream: (sessionId: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messagesBySession: {},
   loadedSessions: {},
   pendingSessionId: null,
+  streamControllers: {},
+  cancelStream: (sessionId) => {
+    get().streamControllers[sessionId]?.abort();
+  },
   loadMessages: async (sessionId) => {
     if (get().loadedSessions[sessionId]) return;
     set((state) => ({ loadedSessions: { ...state.loadedSessions, [sessionId]: true } }));
@@ -89,45 +122,92 @@ export const useChatStore = create<ChatState>((set, get) => ({
       text: trimmed,
       meta: "tú · ahora",
     };
+    const assistantId = nextId();
+    const assistantMessage: Message = {
+      id: assistantId,
+      role: "assistant",
+      text: "",
+      meta: "ahora",
+      streaming: true,
+    };
     set((state) => ({
-      messagesBySession: appendMessage(state.messagesBySession, sessionId, userMessage),
+      messagesBySession: appendMessage(
+        appendMessage(state.messagesBySession, sessionId, userMessage),
+        sessionId,
+        assistantMessage
+      ),
       pendingSessionId: sessionId,
+    }));
+
+    const controller = new AbortController();
+    set((state) => ({
+      streamControllers: { ...state.streamControllers, [sessionId]: controller },
     }));
 
     try {
       const model = useModelStore.getState().model;
-      const response = await sendChatMessage(trimmed, sessionId, model);
-      const assistantMessage: Message = {
-        id: nextId(),
-        role: "assistant",
-        text: response.answer,
-        meta: `${response.model} · ahora`,
-        sources: response.sources.map((s) => ({
-          doc: s.document_name,
-          page: s.page != null ? `pág. ${s.page}` : "—",
-          score: s.similarity_score,
-        })),
-      };
-      set((state) => ({
-        messagesBySession: appendMessage(state.messagesBySession, sessionId, assistantMessage),
-      }));
+      await sendChatMessage(
+        trimmed,
+        sessionId,
+        model,
+        {
+          onChunk: (piece) => {
+            set((state) => ({
+              messagesBySession: updateMessage(state.messagesBySession, sessionId, assistantId, (m) => ({
+                ...m,
+                text: m.text + piece,
+              })),
+            }));
+          },
+          onDone: (payload) => {
+            set((state) => ({
+              messagesBySession: updateMessage(state.messagesBySession, sessionId, assistantId, (m) => ({
+                ...m,
+                meta: `${payload.model} · ahora`,
+                sources: sourcesFromDoneEvent(payload),
+                streaming: false,
+              })),
+            }));
+          },
+          onError: (message) => {
+            set((state) => ({
+              messagesBySession: updateMessage(state.messagesBySession, sessionId, assistantId, (m) => ({
+                ...m,
+                role: "error",
+                text: m.text ? `${m.text}\n\n${message}` : message,
+                meta: "error",
+                streaming: false,
+              })),
+            }));
+          },
+        },
+        controller.signal
+      );
     } catch (err) {
-      const errorMessage: Message = {
-        id: nextId(),
-        role: "error",
-        text:
-          err instanceof Error
-            ? err.message
-            : "No se pudo contactar con el backend. Inténtalo de nuevo.",
-        meta: "error",
-      };
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
+      const errorText =
+        err instanceof Error
+          ? err.message
+          : "No se pudo contactar con el backend. Inténtalo de nuevo.";
       set((state) => ({
-        messagesBySession: appendMessage(state.messagesBySession, sessionId, errorMessage),
+        messagesBySession: updateMessage(state.messagesBySession, sessionId, assistantId, (m) => ({
+          ...m,
+          role: "error",
+          text: errorText,
+          meta: "error",
+          streaming: false,
+        })),
       }));
     } finally {
-      if (get().pendingSessionId === sessionId) {
-        set({ pendingSessionId: null });
-      }
+      set((state) => {
+        const { [sessionId]: _removed, ...rest } = state.streamControllers;
+        return {
+          streamControllers: rest,
+          pendingSessionId: state.pendingSessionId === sessionId ? null : state.pendingSessionId,
+        };
+      });
     }
   },
 }));

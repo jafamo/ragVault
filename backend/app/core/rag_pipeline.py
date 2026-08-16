@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from typing import TypedDict
 
 from langchain_core.documents import Document
@@ -55,6 +55,16 @@ def make_generate_step(llm: BaseChatModel) -> PipelineStep:
     return generate_step
 
 
+def make_generate_step_stream(llm: BaseChatModel) -> Callable[[PipelineContext], AsyncIterator[str]]:
+    async def generate_step_stream(ctx: PipelineContext) -> AsyncIterator[str]:
+        async for chunk in llm.astream(ctx["prompt"]):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            if content:
+                yield content
+
+    return generate_step_stream
+
+
 def sources_from_context(ctx: PipelineContext) -> list[Source]:
     sources: list[Source] = []
     for doc, score in ctx.get("retrieved", []):
@@ -92,6 +102,23 @@ def run_pipeline(
         ctx = step(ctx)
 
     return ctx["answer"], sources_from_context(ctx)
+
+
+def retrieve_and_build_prompt(
+    question: str,
+    vector_store: VectorStoreRepository,
+    top_k: int,
+) -> PipelineContext:
+    """Ejecuta recuperación y construcción de prompt (los pasos del
+    pipeline que no dependen del LLM), para poder responder con un error
+    normal si la recuperación falla, antes de abrir un stream SSE. Si
+    `ctx["retrieved"]` queda vacío, el llamador debe tratarlo como el caso
+    "sin documentos indexados" en vez de generar."""
+    ctx: PipelineContext = {"question": question, "top_k": top_k}
+    ctx = make_retrieve_step(vector_store)(ctx)
+    if ctx["retrieved"]:
+        ctx = prompt_step(ctx)
+    return ctx
 
 
 def generate_title(llm: BaseChatModel, first_message: str) -> str:
