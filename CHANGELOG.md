@@ -97,6 +97,12 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   conservan en disco (visibles como "ruta absoluta" en la Biblioteca)
   hasta que el usuario elimina el documento explícitamente
   (`document-library`).
+- El chat deja de esperar a la respuesta completa del LLM para mostrar
+  algo: el texto del asistente aparece progresivamente a medida que se
+  genera, y las fuentes citadas se muestran al terminar. **BREAKING**:
+  `POST /chat` responde ahora como un stream de eventos
+  (`text/event-stream`) en vez de un único JSON
+  (`chat-response-streaming`).
 
 ### Fixed
 

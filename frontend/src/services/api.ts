@@ -96,10 +96,15 @@ export interface SourceResponse {
   similarity_score: number;
 }
 
-export interface ChatApiResponse {
-  answer: string;
+export interface ChatDoneEvent {
   sources: SourceResponse[];
   model: string;
+}
+
+export interface ChatStreamHandlers {
+  onChunk: (text: string) => void;
+  onDone: (payload: ChatDoneEvent) => void;
+  onError: (message: string) => void;
 }
 
 export interface ErrorDocumentResponse {
@@ -137,20 +142,57 @@ export function getStatsByTag(): Promise<Record<string, number>> {
   return getJson("/stats/by-tag");
 }
 
+function parseSseFrame(frame: string): { event: string; data: unknown } | null {
+  if (!frame.trim()) return null;
+  const [eventLine, dataLine] = frame.split("\n");
+  return {
+    event: eventLine.replace(/^event: /, ""),
+    data: JSON.parse(dataLine.replace(/^data: /, "")),
+  };
+}
+
 export async function sendChatMessage(
   message: string,
   sessionId: string,
   model: string,
-): Promise<ChatApiResponse> {
+  handlers: ChatStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message, session_id: sessionId, model }),
+    signal,
   });
-  if (!res.ok) {
+  if (!res.ok || !res.body) {
     throw new Error(`Error ${res.status} al consultar el backend`);
   }
-  return res.json();
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let separatorIndex: number;
+    while ((separatorIndex = buffer.indexOf("\n\n")) !== -1) {
+      const frame = buffer.slice(0, separatorIndex);
+      buffer = buffer.slice(separatorIndex + 2);
+      const parsed = parseSseFrame(frame);
+      if (!parsed) continue;
+
+      if (parsed.event === "chunk") {
+        handlers.onChunk(parsed.data as string);
+      } else if (parsed.event === "done") {
+        handlers.onDone(parsed.data as ChatDoneEvent);
+      } else if (parsed.event === "error") {
+        handlers.onError((parsed.data as { message: string }).message);
+      }
+    }
+  }
 }
 
 export interface SessionApiResponse {
