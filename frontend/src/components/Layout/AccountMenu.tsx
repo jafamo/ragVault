@@ -96,6 +96,13 @@ export default function AccountMenu() {
             >
               {isTerminal ? "stats" : "Estadísticas"}
             </button>
+            <button
+              type="button"
+              aria-pressed={view === "library"}
+              onClick={() => setView("library")}
+            >
+              {isTerminal ? "library" : "Biblioteca"}
+            </button>
           </div>
         </div>
 

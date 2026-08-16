@@ -55,6 +55,13 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   sobreviven a recargar la página, en vez de perderse al refrescar. El
   título de cada sesión se genera automáticamente con el LLM tras el
   primer mensaje (`chat-sessions`).
+- Nueva vista "Biblioteca", accesible desde el mismo control del menú de
+  cuenta que alterna Chat/Estadísticas: tabla de todos los documentos
+  ingeridos con buscador independiente por columna (estado, título,
+  tipo/formato, tamaño, tags, ruta absoluta del fichero) y botón para
+  eliminar un documento, incluyendo sus chunks indexados y el fichero
+  físico. Eliminar un documento que todavía se está procesando cancela su
+  ingesta en curso en vez de bloquear el borrado (`document-library`).
 
 ### Changed
 
@@ -78,6 +85,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   se inicia con una única sesión nueva y vacía (`new-chat-session`).
 - **BREAKING**: `POST /chat` pasa a requerir `session_id`; ya no acepta
   peticiones sin una sesión existente (`chat-sessions`).
+- Los ficheros subidos ya no se borran al terminar la ingesta: se
+  conservan en disco (visibles como "ruta absoluta" en la Biblioteca)
+  hasta que el usuario elimina el documento explícitamente
+  (`document-library`).
 
 ### Fixed
 

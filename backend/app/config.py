@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     ingestion_max_retries: int = 3
     chroma_persist_dir: str = "./data/chroma"
     sqlite_path: str = "./data/ragvault.db"
+    uploads_dir: str = "./data/uploads"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

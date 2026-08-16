@@ -12,6 +12,21 @@ class DocumentResponse(BaseModel):
     status: str
 
 
+class DocumentListItem(BaseModel):
+    id: str
+    status: str
+    filename: str
+    format: str
+    size_bytes: int | None
+    tags: list[str]
+    absolute_path: str | None
+    uploaded_at: datetime
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentListItem]
+
+
 class DocumentStatusResponse(BaseModel):
     status: str
     stage: str | None = None

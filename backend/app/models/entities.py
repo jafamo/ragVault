@@ -29,6 +29,8 @@ class Document(Base):
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String, default="queued")
     error_message: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    absolute_path: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
     tags: Mapped[list["Tag"]] = relationship(secondary=document_tags, back_populates="documents")
 
 

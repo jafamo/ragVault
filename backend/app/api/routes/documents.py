@@ -1,14 +1,21 @@
-import tempfile
+import asyncio
+import mimetypes
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from starlette import status
 
+from app.config import settings
+from app.core.cancellation import cancellation_registry
 from app.core.logging import get_logger
 from app.core.progress import progress_tracker
 from app.document_processing.ingestion_pipeline import run_ingestion
 from app.document_processing.loader_factory import UnsupportedFormatError, get_loader
 from app.models.schemas import (
+    DocumentListItem,
+    DocumentListResponse,
     DocumentResponse,
     DocumentStatusResponse,
     TagAssignRequest,
@@ -16,9 +23,13 @@ from app.models.schemas import (
 )
 from app.repositories.document_repo import DocumentRepository
 from app.repositories.tag_repo import TagRepository
+from app.repositories.vector_store import VectorStoreRepository
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+_CANCEL_WAIT_TIMEOUT_SECONDS = 5
+_CANCEL_WAIT_POLL_SECONDS = 0.1
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_202_ACCEPTED)
@@ -31,14 +42,24 @@ async def upload_document(file: UploadFile, background_tasks: BackgroundTasks) -
     except UnsupportedFormatError as exc:
         raise HTTPException(status_code=415, detail=str(exc)) from exc
 
-    with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as tmp:
-        tmp.write(await file.read())
-        tmp_path = tmp.name
+    document_id = str(uuid4())
+    uploads_dir = Path(settings.uploads_dir)
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = uploads_dir / f"{document_id}{extension}"
+    dest_path.write_bytes(await file.read())
+    absolute_path = str(dest_path.resolve())
+    size_bytes = dest_path.stat().st_size
 
     document_repo = DocumentRepository()
-    document = document_repo.create(filename=filename, format=extension.lstrip("."))
+    document = document_repo.create(
+        document_id=document_id,
+        filename=filename,
+        format=extension.lstrip("."),
+        size_bytes=size_bytes,
+        absolute_path=absolute_path,
+    )
 
-    background_tasks.add_task(run_ingestion, document.id, tmp_path, filename)
+    background_tasks.add_task(run_ingestion, document.id, absolute_path, filename)
 
     logger.info("document_queued", filename=filename, document_id=document.id)
 
@@ -88,3 +109,73 @@ async def get_document_tags(document_id: str) -> TagListResponse:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
 
     return TagListResponse(tags=tags)
+
+
+@router.get("/documents", response_model=DocumentListResponse)
+async def list_documents() -> DocumentListResponse:
+    document_repo = DocumentRepository()
+    documents = document_repo.list_all()
+
+    return DocumentListResponse(
+        documents=[
+            DocumentListItem(
+                id=document.id,
+                status=document.status,
+                filename=document.filename,
+                format=document.format,
+                size_bytes=document.size_bytes,
+                tags=[tag.name for tag in document.tags],
+                absolute_path=document.absolute_path,
+                uploaded_at=document.uploaded_at,
+            )
+            for document in documents
+        ]
+    )
+
+
+@router.get("/documents/{document_id}/file")
+async def get_document_file(document_id: str) -> FileResponse:
+    document_repo = DocumentRepository()
+    document = document_repo.get(document_id)
+    if document is None or not document.absolute_path:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    file_path = Path(document.absolute_path)
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="El fichero ya no está disponible en disco")
+
+    media_type = mimetypes.guess_type(document.filename)[0] or "application/octet-stream"
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        filename=document.filename,
+        content_disposition_type="inline",
+    )
+
+
+@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_document(document_id: str) -> None:
+    document_repo = DocumentRepository()
+    document = document_repo.get(document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    if document.status == "processing":
+        cancellation_registry.request_cancel(document_id)
+        waited = 0.0
+        while waited < _CANCEL_WAIT_TIMEOUT_SECONDS:
+            current = document_repo.get(document_id)
+            if current is None or current.status != "processing":
+                break
+            await asyncio.sleep(_CANCEL_WAIT_POLL_SECONDS)
+            waited += _CANCEL_WAIT_POLL_SECONDS
+        logger.info("document_ingestion_cancel_requested", document_id=document_id, waited_seconds=waited)
+
+    vector_store = VectorStoreRepository()
+    vector_store.delete_by_document_id(document_id)
+
+    if document.absolute_path:
+        Path(document.absolute_path).unlink(missing_ok=True)
+
+    document_repo.delete(document_id)
+    logger.info("document_deleted", document_id=document_id)

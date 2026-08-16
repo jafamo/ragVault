@@ -20,3 +20,6 @@ class VectorStoreRepository:
 
     def similarity_search(self, query: str, k: int) -> list[tuple[Document, float]]:
         return self._store.similarity_search_with_relevance_scores(query, k=k)
+
+    def delete_by_document_id(self, document_id: str) -> None:
+        self._store.delete(where={"document_id": document_id})

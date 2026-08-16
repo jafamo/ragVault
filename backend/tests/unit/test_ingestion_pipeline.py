@@ -1,6 +1,7 @@
 from langchain_core.documents import Document
 
 import app.document_processing.ingestion_pipeline as ingestion_pipeline_module
+from app.core.cancellation import cancellation_registry
 from app.document_processing.ingestion_pipeline import run_ingestion
 from app.document_processing.loaders.base import LoaderParsingError
 from app.repositories.document_repo import DocumentRepository
@@ -56,6 +57,42 @@ def test_run_ingestion_parsing_error_transitions_to_error(tmp_path, monkeypatch)
     updated = DocumentRepository().get(document.id)
     assert updated.status == "error"
     assert "fichero corrupto de prueba" in updated.error_message
+
+
+def test_run_ingestion_cancelled_before_loading_marks_cancelled(tmp_path, monkeypatch):
+    monkeypatch.setattr(ingestion_pipeline_module, "get_loader", lambda filename: FakeLoader())
+
+    document, path = _create_temp_document(tmp_path)
+    cancellation_registry.request_cancel(document.id)
+
+    run_ingestion(document.id, path, document.filename)
+
+    updated = DocumentRepository().get(document.id)
+    assert updated.status == "cancelled"
+    assert cancellation_registry.is_cancelled(document.id) is False
+
+
+def test_run_ingestion_cancelled_mid_embedding_stops_writing_chunks(tmp_path, monkeypatch):
+    monkeypatch.setattr(ingestion_pipeline_module, "get_loader", lambda filename: FakeLoader())
+
+    class CancellingVectorStore:
+        def __init__(self):
+            self.calls = 0
+
+        def add_chunks(self, document_id, chunks):
+            self.calls += 1
+            cancellation_registry.request_cancel(document_id)
+
+    fake_store = CancellingVectorStore()
+    monkeypatch.setattr(ingestion_pipeline_module, "VectorStoreRepository", lambda: fake_store)
+
+    document, path = _create_temp_document(tmp_path)
+
+    run_ingestion(document.id, path, document.filename)
+
+    updated = DocumentRepository().get(document.id)
+    assert updated.status == "cancelled"
+    assert fake_store.calls == 1
 
 
 def test_run_ingestion_retries_transient_embedding_failure_then_succeeds(tmp_path, monkeypatch):

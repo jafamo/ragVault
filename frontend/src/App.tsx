@@ -6,6 +6,7 @@ import Sidebar from "./components/Layout/Sidebar";
 import ChatWindow from "./components/Chat/ChatWindow";
 
 const StatsDashboard = lazy(() => import("./components/Stats/StatsDashboard"));
+const DocumentLibrary = lazy(() => import("./components/Documents/DocumentLibrary"));
 
 export default function App() {
   const { skin, mode } = useThemeStore();
@@ -27,6 +28,10 @@ export default function App() {
         {view === "stats" ? (
           <Suspense fallback={<div className="stats-loading">Cargando estadísticas…</div>}>
             <StatsDashboard />
+          </Suspense>
+        ) : view === "library" ? (
+          <Suspense fallback={<div className="stats-loading">Cargando biblioteca…</div>}>
+            <DocumentLibrary />
           </Suspense>
         ) : (
           <ChatWindow />

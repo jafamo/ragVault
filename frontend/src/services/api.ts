@@ -191,3 +191,30 @@ export async function deleteSession(sessionId: string): Promise<void> {
     throw new Error(`Error ${res.status} al eliminar la sesión`);
   }
 }
+
+export interface DocumentListItem {
+  id: string;
+  status: string;
+  filename: string;
+  format: string;
+  size_bytes: number | null;
+  tags: string[];
+  absolute_path: string | null;
+  uploaded_at: string;
+}
+
+export async function listDocuments(): Promise<DocumentListItem[]> {
+  const { documents } = await getJson<{ documents: DocumentListItem[] }>("/documents");
+  return documents;
+}
+
+export async function deleteDocument(documentId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/documents/${documentId}`, { method: "DELETE" });
+  if (!res.ok) {
+    throw new Error(`Error ${res.status} al eliminar el documento`);
+  }
+}
+
+export function getDocumentFileUrl(documentId: string): string {
+  return `${API_URL}/documents/${documentId}/file`;
+}

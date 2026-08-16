@@ -19,7 +19,8 @@ class FakeVectorStore:
         self.added.append((document_id, chunks))
 
 
-def test_upload_pdf_returns_202_queued_then_status_done(client, monkeypatch):
+def test_upload_pdf_returns_202_queued_then_status_done(client, monkeypatch, tmp_path):
+    monkeypatch.setattr(documents_module.settings, "uploads_dir", str(tmp_path))
     monkeypatch.setattr(documents_module, "get_loader", lambda filename: FakeLoader())
     monkeypatch.setattr(ingestion_pipeline_module, "get_loader", lambda filename: FakeLoader())
     monkeypatch.setattr(ingestion_pipeline_module, "VectorStoreRepository", FakeVectorStore)
