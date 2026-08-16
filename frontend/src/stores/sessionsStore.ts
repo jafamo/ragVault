@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useChatStore } from "./chatStore";
 
 export interface Session {
   id: string;
@@ -7,13 +8,15 @@ export interface Session {
   time: string;
 }
 
-const initialSessions: Session[] = [
-  { id: "s5", title: "Cláusulas de rescisión — Proveedora Ibérica", tag: "legal", time: "hoy" },
-  { id: "s4", title: "Modelo Ollama: qwen2.5 vs llama3.1", tag: "técnico", time: "ayer" },
-  { id: "s3", title: "Resumen informe financiero Q3", tag: "financiero", time: "2 días" },
-  { id: "s2", title: "Política de vacaciones 2026", tag: "rrhh", time: "5 días" },
-  { id: "s1", title: "Roadmap de producto — presentación", tag: "marketing", time: "6 días" },
-];
+let sessionCounter = 0;
+function nextSessionId() {
+  sessionCounter += 1;
+  return `local-session-${sessionCounter}`;
+}
+
+function blankSession(): Session {
+  return { id: nextSessionId(), title: "Nueva conversación", tag: "", time: "ahora" };
+}
 
 interface SessionsState {
   sessions: Session[];
@@ -21,11 +24,14 @@ interface SessionsState {
   setActive: (id: string) => void;
   renameSession: (id: string, title: string) => void;
   deleteSession: (id: string) => void;
+  createSession: () => void;
 }
 
-export const useSessionsStore = create<SessionsState>((set) => ({
-  sessions: initialSessions,
-  activeId: initialSessions[0].id,
+const initialSession = blankSession();
+
+export const useSessionsStore = create<SessionsState>((set, get) => ({
+  sessions: [initialSession],
+  activeId: initialSession.id,
   setActive: (id) => set({ activeId: id }),
   renameSession: (id, title) =>
     set((state) => ({
@@ -36,8 +42,20 @@ export const useSessionsStore = create<SessionsState>((set) => ({
   deleteSession: (id) =>
     set((state) => {
       const sessions = state.sessions.filter((s) => s.id !== id);
+      if (sessions.length === 0) {
+        const fresh = blankSession();
+        return { sessions: [fresh], activeId: fresh.id };
+      }
       const activeId =
-        state.activeId === id ? sessions[0]?.id ?? "" : state.activeId;
+        state.activeId === id ? sessions[0].id : state.activeId;
       return { sessions, activeId };
     }),
+  createSession: () => {
+    const { activeId, sessions } = get();
+    const activeIsEmpty = (useChatStore.getState().messagesBySession[activeId] ?? []).length === 0;
+    if (activeIsEmpty && sessions.some((s) => s.id === activeId)) return;
+
+    const fresh = blankSession();
+    set((state) => ({ sessions: [fresh, ...state.sessions], activeId: fresh.id }));
+  },
 }));

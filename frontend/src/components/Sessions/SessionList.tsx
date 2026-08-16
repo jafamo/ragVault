@@ -4,7 +4,7 @@ import { useThemeStore } from "../../stores/themeStore";
 import SessionItem from "./SessionItem";
 
 export default function SessionList() {
-  const { sessions, activeId } = useSessionsStore();
+  const { sessions, activeId, createSession } = useSessionsStore();
   const { historyCollapsed, toggleHistoryCollapsed } = useSidebarStore();
   const skin = useThemeStore((s) => s.skin);
 
@@ -24,6 +24,15 @@ export default function SessionList() {
           {historyCollapsed ? "»" : "«"}
         </button>
       </div>
+      <button
+        type="button"
+        className="hist-new"
+        aria-label="Nuevo chat"
+        title="Nuevo chat"
+        onClick={createSession}
+      >
+        {historyCollapsed ? "+" : "+ Nuevo chat"}
+      </button>
       {sessions.map((session, index) => (
         <SessionItem
           key={session.id}

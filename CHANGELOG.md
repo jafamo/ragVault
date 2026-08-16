@@ -46,6 +46,10 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   cada documento fallido), ingeridos por franja temporal (últimos 5, 15,
   30, 90 y 365 días) y por tag. Incluye un modelo mínimo de tags
   asignables manualmente a un documento (`document-statistics-dashboard`).
+- Botón "Nuevo chat" en el panel HISTORIAL (visible también en su estado
+  colapsado) para abrir una sesión vacía sin arrastrar los mensajes de la
+  conversación activa; si la sesión activa ya está vacía, se reutiliza en
+  vez de crear una duplicada (`new-chat-session`).
 
 ### Changed
 
@@ -65,6 +69,8 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   mensaje del chat, que responde con el modelo que efectivamente generó
   la respuesta. La selección no persiste entre recargas de página
   (`chat-model-selection`).
+- El historial de sesiones ya no arranca con conversaciones de ejemplo:
+  se inicia con una única sesión nueva y vacía (`new-chat-session`).
 
 ### Fixed
 

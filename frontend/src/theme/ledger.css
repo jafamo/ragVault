@@ -60,6 +60,11 @@
 [data-skin="ledger"] .app-sidebar-narrow .tag-strip { display: none; }
 [data-skin="ledger"] .app-sidebar-narrow .settings-panel { display: none; }
 [data-skin="ledger"] .hist-toggle { color: var(--brass); }
+[data-skin="ledger"] .hist-new {
+  border: 1px solid var(--brass); background: none; color: var(--brass);
+  font-family: 'IBM Plex Mono';
+}
+[data-skin="ledger"] .hist-new:hover { background: var(--brass); color: var(--sf); }
 [data-skin="ledger"] .hist-row-collapsed { background: var(--sf2); color: var(--txd); font-family: 'IBM Plex Mono'; }
 [data-skin="ledger"] .hist-row-collapsed.active { background: var(--brass); color: var(--sf); }
 
