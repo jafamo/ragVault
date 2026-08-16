@@ -41,14 +41,16 @@ Ajustes.
 
 ### Requirement: Historial de sesiones editable
 El sistema SHALL permitir renombrar el título de una sesión del historial
-haciendo clic sobre él, y eliminar una sesión del historial mediante un
-control visible al pasar el ratón, operando sobre los datos de ejemplo en
-memoria. El panel de historial SHALL poder colapsarse a una tira estrecha
-de iconos por sesión (sin título) mediante un control visible, y
-expandirse de vuelta al listado completo; el estado colapsado/expandido
-persiste entre recargas de página. En viewport móvil (≤768px de ancho)
-el panel SHALL colapsarse automáticamente al cargar o al cruzar ese
-ancho, sin esperar a que el usuario pulse el control.
+haciendo clic sobre él (cambio solo local, sin persistir en backend), y
+eliminar una sesión del historial mediante un control visible al pasar el
+ratón, operando sobre sesiones reales persistidas vía la API de
+`chat-sessions` (`GET /sessions`, `DELETE /sessions/{id}`). El panel de
+historial SHALL poder colapsarse a una tira estrecha de iconos por sesión
+(sin título) mediante un control visible, y expandirse de vuelta al
+listado completo; el estado colapsado/expandido persiste entre recargas de
+página. En viewport móvil (≤768px de ancho) el panel SHALL colapsarse
+automáticamente al cargar o al cruzar ese ancho, sin esperar a que el
+usuario pulse el control.
 
 #### Scenario: Renombrar una sesión
 - **WHEN** el usuario hace clic sobre el título de una sesión, edita el
@@ -58,7 +60,13 @@ ancho, sin esperar a que el usuario pulse el control.
 #### Scenario: Eliminar una sesión
 - **WHEN** el usuario pulsa el control de eliminar sobre una fila del
   historial
-- **THEN** esa sesión desaparece de la lista
+- **THEN** el sistema llama a `DELETE /sessions/{id}` y esa sesión
+  desaparece de la lista
+
+#### Scenario: El historial arranca con las sesiones reales del backend
+- **WHEN** el usuario carga la aplicación
+- **THEN** el panel HISTORIAL muestra el resultado de `GET /sessions`
+  (ordenado por más reciente primero), no datos de ejemplo
 
 #### Scenario: Colapsar el historial
 - **WHEN** el usuario pulsa el control de colapsar del panel HISTORIAL
@@ -79,7 +87,7 @@ ancho, sin esperar a que el usuario pulse el control.
 - **WHEN** el usuario pulsa el control de expandir estando el panel
   colapsado
 - **THEN** el panel vuelve a mostrar el listado completo de sesiones con
-  título y categoría
+  título
 
 #### Scenario: El estado colapsado persiste
 - **WHEN** el usuario colapsa el historial y recarga la página
@@ -154,19 +162,20 @@ persistir entre recargas de página).
 ### Requirement: Chat honesto sobre ser una maqueta
 El sistema SHALL permitir escribir y enviar un mensaje en el input de
 chat, añadirlo al hilo de la sesión activa y enviarlo al pipeline RAG
-real (`POST /chat`) con el modelo seleccionado, mostrando un estado de
-carga mientras espera respuesta. SHALL mostrar la respuesta real del LLM
-con sus fuentes citadas cuando la petición tenga éxito, y SHALL mostrar un
-mensaje de error explícito, sin inventar contenido, si el backend, el
-modelo elegido o Ollama no responden — el chat nunca fabrica ni simula una
-respuesta.
+real (`POST /chat`) con el `session_id` de la sesión activa y el modelo
+seleccionado, mostrando un estado de carga mientras espera respuesta.
+SHALL mostrar la respuesta real del LLM con sus fuentes citadas cuando la
+petición tenga éxito, y SHALL mostrar un mensaje de error explícito, sin
+inventar contenido, si el backend, el modelo elegido o Ollama no
+responden — el chat nunca fabrica ni simula una respuesta.
 
 #### Scenario: Enviar un mensaje con éxito
 - **WHEN** el usuario escribe un mensaje, lo envía, y el backend responde
   con éxito a `POST /chat`
 - **THEN** el mensaje aparece en el hilo como mensaje de usuario, seguido
   de la respuesta real del pipeline RAG con sus fuentes citadas y el
-  nombre del modelo que respondió
+  nombre del modelo que respondió, y ambos quedan persistidos en la
+  sesión activa
 
 #### Scenario: Fallo del backend o de Ollama
 - **WHEN** la llamada a `POST /chat` falla o el backend indica que Ollama
@@ -187,18 +196,20 @@ cabecera de la aplicación, en ambas identidades visuales.
 ### Requirement: Nueva sesión de chat vacía
 El sistema SHALL ofrecer un control "Nuevo chat" en el panel de
 historial, visible tanto en su estado expandido como en el colapsado, que
-crea una sesión vacía (sin mensajes, sin tag, título "Nueva conversación")
-y la marca como activa, de forma que el usuario pueda empezar una
-conversación sobre un tema distinto sin reutilizar el hilo de mensajes de
-la sesión anterior. Si la sesión activa ya está vacía (sin mensajes), el
-sistema SHALL reutilizarla en lugar de crear una sesión duplicada.
+crea una sesión vacía vía `POST /sessions` (título "Nueva conversación"
+hasta que el backend le asigne uno tras el primer mensaje) y la marca
+como activa, de forma que el usuario pueda empezar una conversación sobre
+un tema distinto sin reutilizar el hilo de mensajes de la sesión
+anterior. Si la sesión activa ya está vacía (sin mensajes), el sistema
+SHALL reutilizarla en lugar de crear una sesión duplicada.
 
 #### Scenario: Crear una sesión nueva desde el historial expandido
 - **WHEN** el usuario pulsa "Nuevo chat" estando el panel de historial
   expandido y con una sesión activa que tiene mensajes
-- **THEN** aparece una sesión nueva al principio del historial con título
-  "Nueva conversación", se marca como activa, y el área de chat muestra un
-  hilo vacío sin mensajes de la sesión anterior
+- **THEN** el sistema llama a `POST /sessions`, la sesión creada aparece
+  al principio del historial con título "Nueva conversación", se marca
+  como activa, y el área de chat muestra un hilo vacío sin mensajes de la
+  sesión anterior
 
 #### Scenario: Crear una sesión nueva desde el historial colapsado
 - **WHEN** el usuario pulsa el icono de "Nuevo chat" estando el panel de
@@ -210,17 +221,18 @@ sistema SHALL reutilizarla en lugar de crear una sesión duplicada.
 #### Scenario: Evitar sesiones vacías duplicadas
 - **WHEN** el usuario pulsa "Nuevo chat" estando ya activa una sesión sin
   ningún mensaje
-- **THEN** no se crea una sesión adicional y la sesión activa vacía se
-  mantiene tal cual
+- **THEN** no se crea una sesión adicional (no se llama a `POST /sessions`)
+  y la sesión activa vacía se mantiene tal cual
 
 #### Scenario: El hilo de mensajes es independiente por sesión
 - **WHEN** el usuario cambia entre dos sesiones distintas del historial
-- **THEN** cada una muestra únicamente los mensajes que se han enviado en
-  esa sesión, sin mezclar contenido de otras sesiones
+- **THEN** el sistema carga vía `GET /sessions/{id}/messages` únicamente
+  los mensajes de la sesión seleccionada, sin mezclar contenido de otras
+  sesiones
 
 #### Scenario: Borrar la última sesión no deja el historial sin sesión activa
 - **WHEN** el usuario elimina la única sesión que queda en el historial
-- **THEN** el sistema crea automáticamente una sesión nueva y vacía y la
-  marca como activa, en vez de dejar la aplicación sin ninguna sesión
-  seleccionada
+- **THEN** el sistema crea automáticamente una sesión nueva (vía
+  `POST /sessions`) y la marca como activa, en vez de dejar la aplicación
+  sin ninguna sesión seleccionada
 
