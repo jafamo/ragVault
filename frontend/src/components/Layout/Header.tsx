@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { health } from "../../services/api";
 import { useThemeStore } from "../../stores/themeStore";
-import { DEFAULT_MODEL } from "../../data/mockModels";
+import { useModelStore } from "../../stores/modelStore";
 
 export default function Header() {
   const { skin, mode, setMode } = useThemeStore();
+  const model = useModelStore((s) => s.model);
   const [ollamaStatus, setOllamaStatus] = useState<"reachable" | "unreachable" | "checking">(
     "checking"
   );
@@ -44,7 +45,7 @@ export default function Header() {
               ? "Ollama conectado"
               : "Ollama no disponible"}
         </span>
-        <span>{DEFAULT_MODEL}</span>
+        <span>{model}</span>
 
         <button
           type="button"

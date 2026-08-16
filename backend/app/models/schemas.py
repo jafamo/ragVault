@@ -22,6 +22,7 @@ class DocumentStatusResponse(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    model: str | None = None
 
 
 class SourceResponse(BaseModel):
@@ -35,6 +36,12 @@ class SourceResponse(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources: list[SourceResponse]
+    model: str
+
+
+class ModelsResponse(BaseModel):
+    models: list[str]
+    default: str
 
 class TagAssignRequest(BaseModel):
     tags: list[str]

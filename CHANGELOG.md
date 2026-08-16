@@ -59,6 +59,12 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
 - `POST /upload` deja de esperar a que termine toda la ingesta: confirma
   la recepción del fichero al momento y procesa el resto en segundo plano
   (`document-ingestion-multiformat`).
+- El selector de modelo del menú de cuenta deja de ser cosmético: consulta
+  los modelos realmente instalados en el Ollama configurado (`GET
+  /models`) en vez de una lista fija, y el modelo elegido se envía en cada
+  mensaje del chat, que responde con el modelo que efectivamente generó
+  la respuesta. La selección no persiste entre recargas de página
+  (`chat-model-selection`).
 
 ### Fixed
 

@@ -1,29 +1,4 @@
-# rag-pipeline Specification
-
-## Purpose
-TBD - created by archiving change rag-pipeline-basico. Update Purpose after archive.
-## Requirements
-### Requirement: Pipeline de recuperación y generación desacoplado
-El sistema SHALL resolver una pregunta mediante una secuencia de pasos
-desacoplados (recuperar chunks relevantes → construir prompt → generar
-respuesta), cada uno testable de forma independiente, en vez de lógica
-monolítica en la ruta de API.
-
-#### Scenario: Ejecución completa del pipeline
-- **WHEN** se invoca el pipeline con una pregunta
-- **THEN** se ejecutan en orden los pasos de recuperación, construcción de
-  prompt y generación, y el resultado incluye tanto la respuesta como los
-  chunks usados
-
-### Requirement: Prompt reutilizado del plan
-El sistema SHALL usar el `RAG_PROMPT` definido en `rag_vault_plan.md` §7.4
-para construir el prompt enviado al LLM, sin crear una plantilla
-alternativa.
-
-#### Scenario: Prompt incluye contexto y pregunta
-- **WHEN** se construye el prompt para una pregunta dada
-- **THEN** incluye los chunks recuperados como contexto y la pregunta del
-  usuario, siguiendo el formato de `RAG_PROMPT`
+## MODIFIED Requirements
 
 ### Requirement: Endpoint de chat con fuentes citadas
 El sistema SHALL exponer `POST /chat` que reciba una pregunta y,
@@ -54,6 +29,8 @@ página, score de similitud) y el modelo que generó la respuesta.
 - **THEN** la generación usa `Settings.ollama_model` como hasta ahora, sin
   cambio de comportamiento para consumidores existentes del endpoint
 
+## ADDED Requirements
+
 ### Requirement: Listado de modelos Ollama disponibles
 El sistema SHALL exponer `GET /models`, que consulta el Ollama configurado
 (`Settings.ollama_base_url`) y devuelve los modelos de generación
@@ -69,15 +46,3 @@ por defecto (`Settings.ollama_model`).
 - **WHEN** se hace `GET /models` y Ollama no responde
 - **THEN** el sistema responde con un error controlado, sin tumbar el
   proceso
-
-### Requirement: Chat de la UI conectado al pipeline real
-El sistema SHALL enviar el mensaje del usuario a `POST /chat` desde la UI
-de chat existente, mostrando un estado de carga mientras espera y, al
-recibir respuesta, la respuesta real con sus fuentes citadas mediante el
-componente `SourcesCited` ya existente.
-
-#### Scenario: Respuesta mostrada en el hilo
-- **WHEN** el backend responde con éxito a `POST /chat`
-- **THEN** el hilo de la sesión activa muestra el mensaje del usuario
-  seguido de la respuesta real y sus fuentes citadas
-
