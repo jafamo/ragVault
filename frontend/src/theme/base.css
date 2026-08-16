@@ -62,6 +62,14 @@ a { color: inherit; }
   display: flex; align-items: center; justify-content: center;
   border: none; border-radius: 50%; cursor: pointer; font-size: 13px; line-height: 1;
 }
+.hist-new {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; margin: 0 0 8px; padding: 6px 8px;
+  border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;
+}
+.app-sidebar-narrow .hist-new {
+  width: 32px; height: 32px; margin: 0 auto 8px; padding: 0; font-size: 16px;
+}
 .hist-row-collapsed {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; margin: 0 auto 6px;

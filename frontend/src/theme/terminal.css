@@ -52,6 +52,11 @@
 [data-skin="terminal"] .app-sidebar-narrow .tag-strip { display: none; }
 [data-skin="terminal"] .app-sidebar-narrow .settings-panel { display: none; }
 [data-skin="terminal"] .hist-toggle { color: var(--amb); }
+[data-skin="terminal"] .hist-new {
+  border: 1px solid var(--amb); background: none; color: var(--amb);
+  font-family: 'JetBrains Mono Var';
+}
+[data-skin="terminal"] .hist-new:hover { background: var(--amb); color: var(--gr); }
 [data-skin="terminal"] .hist-row-collapsed { background: var(--sf2); color: var(--txd); font-family: 'JetBrains Mono Var'; }
 [data-skin="terminal"] .hist-row-collapsed.active { background: var(--amb); color: var(--gr); }
 
