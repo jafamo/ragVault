@@ -1,29 +1,4 @@
-# rag-pipeline Specification
-
-## Purpose
-TBD - created by archiving change rag-pipeline-basico. Update Purpose after archive.
-## Requirements
-### Requirement: Pipeline de recuperación y generación desacoplado
-El sistema SHALL resolver una pregunta mediante una secuencia de pasos
-desacoplados (recuperar chunks relevantes → construir prompt → generar
-respuesta), cada uno testable de forma independiente, en vez de lógica
-monolítica en la ruta de API.
-
-#### Scenario: Ejecución completa del pipeline
-- **WHEN** se invoca el pipeline con una pregunta
-- **THEN** se ejecutan en orden los pasos de recuperación, construcción de
-  prompt y generación, y el resultado incluye tanto la respuesta como los
-  chunks usados
-
-### Requirement: Prompt reutilizado del plan
-El sistema SHALL usar el `RAG_PROMPT` definido en `rag_vault_plan.md` §7.4
-para construir el prompt enviado al LLM, sin crear una plantilla
-alternativa.
-
-#### Scenario: Prompt incluye contexto y pregunta
-- **WHEN** se construye el prompt para una pregunta dada
-- **THEN** incluye los chunks recuperados como contexto y la pregunta del
-  usuario, siguiendo el formato de `RAG_PROMPT`
+## MODIFIED Requirements
 
 ### Requirement: Endpoint de chat con fuentes citadas
 El sistema SHALL exponer `POST /chat` que reciba una pregunta, el
@@ -100,22 +75,6 @@ la respuesta del asistente únicamente si el stream se completa con éxito.
   cuanto detecta la desconexión, sin seguir consumiendo tokens para nadie,
   y no persiste una respuesta de asistente parcial
 
-### Requirement: Listado de modelos Ollama disponibles
-El sistema SHALL exponer `GET /models`, que consulta el Ollama configurado
-(`Settings.ollama_base_url`) y devuelve los modelos de generación
-instalados (excluyendo `Settings.ollama_embed_model`) junto con el modelo
-por defecto (`Settings.ollama_model`).
-
-#### Scenario: Consultar modelos disponibles
-- **WHEN** se hace `GET /models` y Ollama responde
-- **THEN** la respuesta incluye la lista de modelos instalados, sin el
-  modelo de embeddings, y cuál es el modelo por defecto
-
-#### Scenario: Ollama no disponible
-- **WHEN** se hace `GET /models` y Ollama no responde
-- **THEN** el sistema responde con un error controlado, sin tumbar el
-  proceso
-
 ### Requirement: Chat de la UI conectada al pipeline real
 El sistema SHALL enviar el mensaje del usuario a `POST /chat` desde la UI
 de chat existente, consumiendo el stream `text/event-stream` de la
@@ -141,4 +100,3 @@ incremental a medida que llegan eventos `chunk`, y al recibir el evento
 - **THEN** la UI muestra un estado de error visible en el mensaje del
   asistente en curso, en vez de dejarlo con el texto parcial como si fuera
   la respuesta completa
-
