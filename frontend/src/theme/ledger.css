@@ -53,7 +53,6 @@
 [data-skin="ledger"] .lnum { font-family:'IBM Plex Mono'; font-size: 11px; color: var(--brass); font-variant-numeric: tabular-nums; }
 [data-skin="ledger"] .ltitle { font-size: 13px; line-height: 1.35; }
 [data-skin="ledger"] .ltime { font-family:'IBM Plex Mono'; font-size: 10.5px; color: var(--txd); white-space: nowrap; }
-[data-skin="ledger"] .ltag { display:block; margin-top:3px; font-family:'IBM Plex Mono'; font-size: 10px; color: var(--verd); }
 [data-skin="ledger"] .hist-del { background: var(--sf2); color: var(--brick); }
 [data-skin="ledger"] .hist-del:hover { background: var(--brick); color: var(--sf); }
 [data-skin="ledger"] .app-sidebar-narrow .side-label-row { padding: 0 8px; }

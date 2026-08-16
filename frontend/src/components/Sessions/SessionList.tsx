@@ -1,12 +1,17 @@
+import { useEffect } from "react";
 import { useSessionsStore } from "../../stores/sessionsStore";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { useThemeStore } from "../../stores/themeStore";
 import SessionItem from "./SessionItem";
 
 export default function SessionList() {
-  const { sessions, activeId, createSession } = useSessionsStore();
+  const { sessions, activeId, createSession, init } = useSessionsStore();
   const { historyCollapsed, toggleHistoryCollapsed } = useSidebarStore();
   const skin = useThemeStore((s) => s.skin);
+
+  useEffect(() => {
+    init();
+  }, [init]);
 
   return (
     <div className={historyCollapsed ? "hist-collapsed" : undefined}>

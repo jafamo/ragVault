@@ -10,10 +10,18 @@ interface Props {
   collapsed?: boolean;
 }
 
+function formatRelativeTime(iso: string): string {
+  const diffDays = Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return "hoy";
+  if (diffDays === 1) return "ayer";
+  return `${diffDays} días`;
+}
+
 export default function SessionItem({ session, index, total, active, collapsed = false }: Props) {
   const { setActive, renameSession, deleteSession } = useSessionsStore();
   const skin = useThemeStore((s) => s.skin);
   const titleRef = useRef<HTMLSpanElement>(null);
+  const time = formatRelativeTime(session.updatedAt);
 
   const rowClass = skin === "terminal" ? "proc-row" : "ledger-row";
 
@@ -61,7 +69,7 @@ export default function SessionItem({ session, index, total, active, collapsed =
         >
           {session.title}
         </span>
-        <span className="proc-time">{session.time}</span>
+        <span className="proc-time">{time}</span>
         <button
           type="button"
           className="hist-del"
@@ -101,9 +109,8 @@ export default function SessionItem({ session, index, total, active, collapsed =
         >
           {session.title}
         </span>
-        <span className="ltag">{session.tag}</span>
       </span>
-      <span className="ltime">{session.time}</span>
+      <span className="ltime">{time}</span>
       <button
         type="button"
         className="hist-del"

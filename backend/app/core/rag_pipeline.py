@@ -4,7 +4,7 @@ from typing import TypedDict
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 
-from app.core.prompts import RAG_PROMPT
+from app.core.prompts import RAG_PROMPT, TITLE_PROMPT
 from app.repositories.vector_store import VectorStoreRepository
 
 NO_DOCUMENTS_ANSWER = (
@@ -92,3 +92,9 @@ def run_pipeline(
         ctx = step(ctx)
 
     return ctx["answer"], sources_from_context(ctx)
+
+
+def generate_title(llm: BaseChatModel, first_message: str) -> str:
+    response = llm.invoke(TITLE_PROMPT.format(first_message=first_message))
+    content = response.content if hasattr(response, "content") else str(response)
+    return content.strip()

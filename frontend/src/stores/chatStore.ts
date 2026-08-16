@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { sendChatMessage } from "../services/api";
+import { getSessionMessages, sendChatMessage, type MessageApiResponse } from "../services/api";
 import { useModelStore } from "./modelStore";
 
 export interface Source {
@@ -16,12 +16,37 @@ export interface Message {
   sources?: Source[];
 }
 
-const initialMessages: Record<string, Message[]> = {};
-
 let counter = 0;
 function nextId() {
   counter += 1;
   return `local-${counter}`;
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+
+function fromApiMessage(m: MessageApiResponse): Message {
+  const time = formatTime(m.created_at);
+  if (m.role === "user") {
+    return { id: m.id, role: "user", text: m.content, meta: `tú · ${time}` };
+  }
+  const sources: Source[] = m.sources
+    ? (JSON.parse(m.sources).chunks_used ?? []).map(
+        (s: { document_name: string; page: number | null; similarity_score: number }) => ({
+          doc: s.document_name,
+          page: s.page != null ? `pág. ${s.page}` : "—",
+          score: s.similarity_score,
+        })
+      )
+    : undefined;
+  return {
+    id: m.id,
+    role: "assistant",
+    text: m.content,
+    meta: `${m.model_used ?? "?"} · ${time}`,
+    sources,
+  };
 }
 
 function appendMessage(
@@ -35,13 +60,25 @@ function appendMessage(
 
 interface ChatState {
   messagesBySession: Record<string, Message[]>;
+  loadedSessions: Record<string, boolean>;
   pendingSessionId: string | null;
+  loadMessages: (sessionId: string) => Promise<void>;
   sendMessage: (sessionId: string, text: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
-  messagesBySession: initialMessages,
+  messagesBySession: {},
+  loadedSessions: {},
   pendingSessionId: null,
+  loadMessages: async (sessionId) => {
+    if (get().loadedSessions[sessionId]) return;
+    set((state) => ({ loadedSessions: { ...state.loadedSessions, [sessionId]: true } }));
+
+    const messages = (await getSessionMessages(sessionId)).map(fromApiMessage);
+    set((state) => ({
+      messagesBySession: { ...state.messagesBySession, [sessionId]: messages },
+    }));
+  },
   sendMessage: async (sessionId, text) => {
     const trimmed = text.trim();
     if (!trimmed) return;
@@ -59,7 +96,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     try {
       const model = useModelStore.getState().model;
-      const response = await sendChatMessage(trimmed, model);
+      const response = await sendChatMessage(trimmed, sessionId, model);
       const assistantMessage: Message = {
         id: nextId(),
         role: "assistant",
