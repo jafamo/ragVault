@@ -8,3 +8,11 @@ Contexto:
 Pregunta: {question}
 
 Respuesta (cita las fuentes entre corchetes [nombre_documento, página]):"""
+
+TITLE_PROMPT = """Genera un título corto (máximo 6 palabras) que resuma
+la intención de esta pregunta. Responde SOLO con el título, sin comillas
+ni puntuación final.
+
+Pregunta: {first_message}
+
+Título:"""

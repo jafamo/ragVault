@@ -50,6 +50,11 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   colapsado) para abrir una sesión vacía sin arrastrar los mensajes de la
   conversación activa; si la sesión activa ya está vacía, se reutiliza en
   vez de crear una duplicada (`new-chat-session`).
+- Persistencia real del historial de chat: las sesiones y sus mensajes
+  (con fuentes citadas y modelo usado) se guardan en base de datos y
+  sobreviven a recargar la página, en vez de perderse al refrescar. El
+  título de cada sesión se genera automáticamente con el LLM tras el
+  primer mensaje (`chat-sessions`).
 
 ### Changed
 
@@ -71,6 +76,8 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   (`chat-model-selection`).
 - El historial de sesiones ya no arranca con conversaciones de ejemplo:
   se inicia con una única sesión nueva y vacía (`new-chat-session`).
+- **BREAKING**: `POST /chat` pasa a requerir `session_id`; ya no acepta
+  peticiones sin una sesión existente (`chat-sessions`).
 
 ### Fixed
 

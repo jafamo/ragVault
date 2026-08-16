@@ -137,14 +137,57 @@ export function getStatsByTag(): Promise<Record<string, number>> {
   return getJson("/stats/by-tag");
 }
 
-export async function sendChatMessage(message: string, model: string): Promise<ChatApiResponse> {
+export async function sendChatMessage(
+  message: string,
+  sessionId: string,
+  model: string,
+): Promise<ChatApiResponse> {
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, model }),
+    body: JSON.stringify({ message, session_id: sessionId, model }),
   });
   if (!res.ok) {
     throw new Error(`Error ${res.status} al consultar el backend`);
   }
   return res.json();
+}
+
+export interface SessionApiResponse {
+  id: string;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MessageApiResponse {
+  id: string;
+  role: string;
+  content: string;
+  created_at: string;
+  model_used: string | null;
+  sources: string | null;
+}
+
+export async function listSessions(): Promise<SessionApiResponse[]> {
+  return getJson("/sessions");
+}
+
+export async function createSession(): Promise<SessionApiResponse> {
+  const res = await fetch(`${API_URL}/sessions`, { method: "POST" });
+  if (!res.ok) {
+    throw new Error(`Error ${res.status} al crear la sesión`);
+  }
+  return res.json();
+}
+
+export async function getSessionMessages(sessionId: string): Promise<MessageApiResponse[]> {
+  return getJson(`/sessions/${sessionId}/messages`);
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/sessions/${sessionId}`, { method: "DELETE" });
+  if (!res.ok) {
+    throw new Error(`Error ${res.status} al eliminar la sesión`);
+  }
 }

@@ -7,7 +7,12 @@ import InputBar from "./InputBar";
 export default function ChatWindow() {
   const activeId = useSessionsStore((s) => s.activeId);
   const messages = useChatStore((s) => s.messagesBySession[activeId] ?? []);
+  const loadMessages = useChatStore((s) => s.loadMessages);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeId) loadMessages(activeId);
+  }, [activeId, loadMessages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });

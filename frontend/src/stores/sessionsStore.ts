@@ -1,37 +1,42 @@
 import { create } from "zustand";
+import * as api from "../services/api";
 import { useChatStore } from "./chatStore";
 
 export interface Session {
   id: string;
   title: string;
-  tag: string;
-  time: string;
+  updatedAt: string;
 }
 
-let sessionCounter = 0;
-function nextSessionId() {
-  sessionCounter += 1;
-  return `local-session-${sessionCounter}`;
-}
-
-function blankSession(): Session {
-  return { id: nextSessionId(), title: "Nueva conversación", tag: "", time: "ahora" };
+function fromApi(s: api.SessionApiResponse): Session {
+  return { id: s.id, title: s.title ?? "Nueva conversación", updatedAt: s.updated_at };
 }
 
 interface SessionsState {
   sessions: Session[];
   activeId: string;
+  loaded: boolean;
+  init: () => Promise<void>;
   setActive: (id: string) => void;
   renameSession: (id: string, title: string) => void;
-  deleteSession: (id: string) => void;
-  createSession: () => void;
+  deleteSession: (id: string) => Promise<void>;
+  createSession: () => Promise<void>;
 }
 
-const initialSession = blankSession();
-
 export const useSessionsStore = create<SessionsState>((set, get) => ({
-  sessions: [initialSession],
-  activeId: initialSession.id,
+  sessions: [],
+  activeId: "",
+  loaded: false,
+  init: async () => {
+    if (get().loaded) return;
+    set({ loaded: true });
+
+    let sessions = (await api.listSessions()).map(fromApi);
+    if (sessions.length === 0) {
+      sessions = [fromApi(await api.createSession())];
+    }
+    set({ sessions, activeId: sessions[0].id });
+  },
   setActive: (id) => set({ activeId: id }),
   renameSession: (id, title) =>
     set((state) => ({
@@ -39,23 +44,31 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
         s.id === id ? { ...s, title: title.trim() || "(sin título)" } : s
       ),
     })),
-  deleteSession: (id) =>
-    set((state) => {
-      const sessions = state.sessions.filter((s) => s.id !== id);
-      if (sessions.length === 0) {
-        const fresh = blankSession();
-        return { sessions: [fresh], activeId: fresh.id };
-      }
-      const activeId =
-        state.activeId === id ? sessions[0].id : state.activeId;
-      return { sessions, activeId };
-    }),
-  createSession: () => {
-    const { activeId, sessions } = get();
-    const activeIsEmpty = (useChatStore.getState().messagesBySession[activeId] ?? []).length === 0;
-    if (activeIsEmpty && sessions.some((s) => s.id === activeId)) return;
+  deleteSession: async (id) => {
+    await api.deleteSession(id);
 
-    const fresh = blankSession();
+    const { sessions: current, activeId: currentActiveId } = get();
+    let sessions = current.filter((s) => s.id !== id);
+    let activeId = currentActiveId;
+
+    if (sessions.length === 0) {
+      const fresh = fromApi(await api.createSession());
+      sessions = [fresh];
+      activeId = fresh.id;
+    } else if (currentActiveId === id) {
+      activeId = sessions[0].id;
+    }
+    set({ sessions, activeId });
+  },
+  createSession: async () => {
+    const { activeId, sessions } = get();
+    if (sessions.some((s) => s.id === activeId)) {
+      await useChatStore.getState().loadMessages(activeId);
+      const activeIsEmpty = (useChatStore.getState().messagesBySession[activeId] ?? []).length === 0;
+      if (activeIsEmpty) return;
+    }
+
+    const fresh = fromApi(await api.createSession());
     set((state) => ({ sessions: [fresh, ...state.sessions], activeId: fresh.id }));
   },
 }));

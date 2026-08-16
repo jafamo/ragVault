@@ -22,6 +22,7 @@ class DocumentStatusResponse(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    session_id: str
     model: str | None = None
 
 
@@ -54,3 +55,17 @@ class ErrorDocumentResponse(BaseModel):
     filename: str
     format: str
     error_message: str | None
+
+class SessionResponse(BaseModel):
+    id: str
+    title: str | None
+    created_at: datetime
+    updated_at: datetime
+
+class MessageResponse(BaseModel):
+    id: str
+    role: str
+    content: str
+    created_at: datetime
+    model_used: str | None
+    sources: str | None

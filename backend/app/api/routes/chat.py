@@ -1,11 +1,14 @@
+import json
+
 import httpx
 from fastapi import APIRouter, HTTPException
 
 from app.config import settings
 from app.core.llm_provider import get_llm
 from app.core.logging import get_logger
-from app.core.rag_pipeline import run_pipeline
+from app.core.rag_pipeline import generate_title, run_pipeline
 from app.models.schemas import ChatRequest, ChatResponse, ModelsResponse
+from app.repositories.chat_repo import ChatSessionRepository
 from app.repositories.vector_store import VectorStoreRepository
 
 router = APIRouter()
@@ -18,16 +21,49 @@ def _normalize_model_name(name: str) -> str:
     return name if ":" in name else f"{name}:latest"
 
 
+def _try_generate_title(
+    chat_repo: ChatSessionRepository, session_id: str, model: str, first_message: str
+) -> None:
+    try:
+        title = generate_title(get_llm(model), first_message)
+        chat_repo.set_title_if_empty(session_id, title)
+    except Exception:
+        logger.warning("session_title_generation_failed", session_id=session_id)
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
+    chat_repo = ChatSessionRepository()
+    session = chat_repo.get_session(request.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+
     model = request.model or settings.ollama_model
+    chat_repo.add_message(request.session_id, role="user", content=request.message)
+
     answer, sources = run_pipeline(
         question=request.message,
         vector_store=VectorStoreRepository(),
         llm=get_llm(model),
         top_k=settings.retrieval_top_k,
     )
-    logger.info("chat_answered", sources_count=len(sources), model=model)
+
+    sources_json = json.dumps(
+        {
+            "chunks_used": sources,
+            "retriever_config": {"top_k": settings.retrieval_top_k, "filter_tags": []},
+        }
+    )
+    chat_repo.add_message(
+        request.session_id, role="assistant", content=answer, model_used=model, sources=sources_json
+    )
+
+    if session.title is None:
+        _try_generate_title(chat_repo, request.session_id, model, request.message)
+
+    logger.info(
+        "chat_answered", sources_count=len(sources), model=model, session_id=request.session_id
+    )
     return ChatResponse(answer=answer, sources=sources, model=model)
 
 

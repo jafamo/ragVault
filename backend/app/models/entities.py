@@ -38,3 +38,32 @@ class Tag(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
     name: Mapped[str] = mapped_column(String, unique=True)
     documents: Mapped[list[Document]] = relationship(secondary=document_tags, back_populates="tags")
+
+
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    title: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="session",
+        order_by="ChatMessage.created_at",
+        cascade="all, delete-orphan",
+    )
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    session_id: Mapped[str] = mapped_column(String, ForeignKey("chat_sessions.id"))
+    role: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    model_used: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    sources: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    session: Mapped[ChatSession] = relationship(back_populates="messages")

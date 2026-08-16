@@ -32,11 +32,16 @@ class FakeVectorStoreEmpty:
         return []
 
 
+def _new_session(client) -> str:
+    return client.post("/sessions").json()["id"]
+
+
 def test_chat_with_indexed_documents(client, monkeypatch):
     monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreWithResults)
     monkeypatch.setattr(chat_module, "get_llm", lambda model=None: FakeLLM())
+    session_id = _new_session(client)
 
-    response = client.post("/chat", json={"message": "¿Cuál es el preaviso?"})
+    response = client.post("/chat", json={"message": "¿Cuál es el preaviso?", "session_id": session_id})
 
     assert response.status_code == 200
     body = response.json()
@@ -47,8 +52,9 @@ def test_chat_with_indexed_documents(client, monkeypatch):
 def test_chat_without_indexed_documents(client, monkeypatch):
     monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreEmpty)
     monkeypatch.setattr(chat_module, "get_llm", lambda model=None: FakeLLM())
+    session_id = _new_session(client)
 
-    response = client.post("/chat", json={"message": "¿Algo?"})
+    response = client.post("/chat", json={"message": "¿Algo?", "session_id": session_id})
 
     assert response.status_code == 200
     body = response.json()
@@ -62,8 +68,9 @@ def test_chat_without_model_uses_default_from_settings(client, monkeypatch):
     monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreEmpty)
     monkeypatch.setattr(chat_module, "get_llm", lambda model=None: FakeLLM())
     monkeypatch.setattr(config_module.settings, "ollama_model", "llama3.1:8b")
+    session_id = _new_session(client)
 
-    response = client.post("/chat", json={"message": "¿Algo?"})
+    response = client.post("/chat", json={"message": "¿Algo?", "session_id": session_id})
 
     assert response.json()["model"] == "llama3.1:8b"
 
@@ -77,11 +84,62 @@ def test_chat_with_explicit_model_overrides_default(client, monkeypatch):
 
     monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreEmpty)
     monkeypatch.setattr(chat_module, "get_llm", fake_get_llm)
+    session_id = _new_session(client)
 
-    response = client.post("/chat", json={"message": "¿Algo?", "model": "qwen2.5:7b"})
+    response = client.post(
+        "/chat", json={"message": "¿Algo?", "session_id": session_id, "model": "qwen2.5:7b"}
+    )
 
     assert response.json()["model"] == "qwen2.5:7b"
     assert received["model"] == "qwen2.5:7b"
+
+
+def test_chat_without_session_id_is_rejected(client, monkeypatch):
+    monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreEmpty)
+    monkeypatch.setattr(chat_module, "get_llm", lambda model=None: FakeLLM())
+
+    response = client.post("/chat", json={"message": "¿Algo?"})
+
+    assert response.status_code == 422
+
+
+def test_chat_with_unknown_session_id_is_rejected(client, monkeypatch):
+    monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreEmpty)
+    monkeypatch.setattr(chat_module, "get_llm", lambda model=None: FakeLLM())
+
+    response = client.post("/chat", json={"message": "¿Algo?", "session_id": "no-existe"})
+
+    assert response.status_code == 404
+
+
+def test_chat_persists_user_and_assistant_messages(client, monkeypatch):
+    monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreWithResults)
+    monkeypatch.setattr(chat_module, "get_llm", lambda model=None: FakeLLM())
+    session_id = _new_session(client)
+
+    client.post("/chat", json={"message": "¿Cuál es el preaviso?", "session_id": session_id})
+
+    messages = client.get(f"/sessions/{session_id}/messages").json()
+    assert [m["role"] for m in messages] == ["user", "assistant"]
+    assert messages[0]["content"] == "¿Cuál es el preaviso?"
+    assert "90 días" in messages[1]["content"]
+    assert messages[1]["model_used"] is not None
+    assert "chunks_used" in messages[1]["sources"]
+
+
+def test_chat_generates_title_on_first_message_only(client, monkeypatch):
+    monkeypatch.setattr(chat_module, "VectorStoreRepository", FakeVectorStoreEmpty)
+    monkeypatch.setattr(chat_module, "get_llm", lambda model=None: FakeLLM())
+    session_id = _new_session(client)
+    assert client.get(f"/sessions/{session_id}").json()["title"] is None
+
+    client.post("/chat", json={"message": "primera pregunta", "session_id": session_id})
+    title_after_first = client.get(f"/sessions/{session_id}").json()["title"]
+    assert title_after_first
+
+    client.post("/chat", json={"message": "segunda pregunta", "session_id": session_id})
+    title_after_second = client.get(f"/sessions/{session_id}").json()["title"]
+    assert title_after_second == title_after_first
 
 
 def test_list_models_excludes_embedding_model(client, monkeypatch):
