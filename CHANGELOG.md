@@ -62,6 +62,14 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   eliminar un documento, incluyendo sus chunks indexados y el fichero
   físico. Eliminar un documento que todavía se está procesando cancela su
   ingesta en curso en vez de bloquear el borrado (`document-library`).
+- Vista previa de mensajes por sesión en el panel HISTORIAL: cada fila de
+  sesión se puede expandir individualmente para ver sus mensajes sin
+  cambiar la conversación activa del panel central, con un botón "Abrir
+  en el chat" para activarla cuando se decida. El listado de sesiones
+  gana además su propio scroll vertical, independiente del resto del
+  panel: `TagFilter`, la zona de subida y el menú de cuenta quedan
+  siempre visibles sin tener que desplazarse por las sesiones
+  (`history-sidebar-message-preview`).
 
 ### Changed
 

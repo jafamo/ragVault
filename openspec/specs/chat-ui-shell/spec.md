@@ -50,7 +50,15 @@ historial SHALL poder colapsarse a una tira estrecha de iconos por sesión
 listado completo; el estado colapsado/expandido persiste entre recargas de
 página. En viewport móvil (≤768px de ancho) el panel SHALL colapsarse
 automáticamente al cargar o al cruzar ese ancho, sin esperar a que el
-usuario pulse el control.
+usuario pulse el control. En el estado expandido del panel, cada fila de
+sesión SHALL poder expandirse individualmente (como máximo una a la vez)
+para mostrar una vista previa de sus mensajes sin cambiar la sesión activa
+del panel central, con un control separado dentro de esa vista previa para
+activar la sesión en el panel central cuando el usuario lo decida. El
+listado de sesiones SHALL desplazarse verticalmente de forma aislada del
+resto del panel: `TagFilter`, `UploadZone` y `AccountMenu` permanecen
+siempre visibles sin necesidad de scroll para alcanzarlos, sin que este
+comportamiento sea una preferencia configurable en Ajustes.
 
 #### Scenario: Renombrar una sesión
 - **WHEN** el usuario hace clic sobre el título de una sesión, edita el
@@ -93,6 +101,48 @@ usuario pulse el control.
 - **WHEN** el usuario colapsa el historial y recarga la página
 - **THEN** el panel se muestra colapsado al cargar, sin necesidad de
   volver a pulsar el control
+
+#### Scenario: Previsualizar los mensajes de una sesión
+- **WHEN** el usuario, con el panel HISTORIAL expandido, pulsa el
+  control de vista previa de una fila de sesión
+- **THEN** esa fila se expande dentro de la propia barra mostrando sus
+  mensajes en orden cronológico, con los primeros 5 visibles sin scroll y
+  el resto accesible desplazándose dentro de esa vista previa, sin que la
+  conversación activa del panel central cambie
+
+#### Scenario: Solo una vista previa abierta a la vez
+- **WHEN** el usuario expande la vista previa de una sesión estando ya
+  otra sesión con su vista previa abierta
+- **THEN** la vista previa anterior se colapsa automáticamente y solo
+  queda expandida la sesión recién seleccionada
+
+#### Scenario: Activar una sesión desde su vista previa
+- **WHEN** el usuario, con la vista previa de una sesión expandida, pulsa
+  el control explícito para abrir esa sesión en el chat
+- **THEN** esa sesión pasa a ser la sesión activa del panel central,
+  mostrando su conversación completa como si se hubiera seleccionado
+  directamente
+
+#### Scenario: Colapsar el panel oculta las vistas previas
+- **WHEN** el usuario colapsa el panel HISTORIAL a la tira estrecha de
+  iconos estando una sesión con su vista previa expandida
+- **THEN** la tira de iconos no muestra ninguna vista previa de mensajes,
+  y al volver a expandir el panel las filas vuelven a su estado colapsado
+  por defecto (sin vista previa abierta)
+
+#### Scenario: El listado de sesiones se desplaza sin arrastrar el resto del panel
+- **WHEN** hay suficientes sesiones para que el listado no quepa entero
+  en el alto disponible del panel HISTORIAL
+- **THEN** el listado de sesiones muestra su propio scroll vertical, y
+  `TagFilter`, `UploadZone` y `AccountMenu` siguen visibles en su
+  posición sin necesidad de desplazarse por las sesiones para llegar a
+  ellos
+
+#### Scenario: El aislamiento de scroll no es una preferencia de usuario
+- **WHEN** el usuario abre el menú de Ajustes/`AccountMenu`
+- **THEN** no existe ningún control para activar o desactivar el scroll
+  aislado del listado de sesiones — es comportamiento de layout fijo, no
+  una opción configurable
 
 ### Requirement: Menú de cuenta con nombre de usuario
 El sistema SHALL mostrar, en el punto donde antes había un rótulo genérico

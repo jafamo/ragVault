@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSessionsStore } from "../../stores/sessionsStore";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { useThemeStore } from "../../stores/themeStore";
@@ -8,10 +8,19 @@ export default function SessionList() {
   const { sessions, activeId, createSession, init } = useSessionsStore();
   const { historyCollapsed, toggleHistoryCollapsed } = useSidebarStore();
   const skin = useThemeStore((s) => s.skin);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     init();
   }, [init]);
+
+  useEffect(() => {
+    if (historyCollapsed) setExpandedId(null);
+  }, [historyCollapsed]);
+
+  function handleTogglePreview(id: string) {
+    setExpandedId((current) => (current === id ? null : id));
+  }
 
   return (
     <div className={historyCollapsed ? "hist-collapsed" : undefined}>
@@ -46,6 +55,8 @@ export default function SessionList() {
           total={sessions.length}
           active={session.id === activeId}
           collapsed={historyCollapsed}
+          previewExpanded={expandedId === session.id}
+          onTogglePreview={() => handleTogglePreview(session.id)}
         />
       ))}
     </div>
