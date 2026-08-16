@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { sendChatMessage } from "../services/api";
+import { useModelStore } from "./modelStore";
 
 export interface Source {
   doc: string;
@@ -76,12 +77,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     try {
-      const response = await sendChatMessage(trimmed);
+      const model = useModelStore.getState().model;
+      const response = await sendChatMessage(trimmed, model);
       const assistantMessage: Message = {
         id: nextId(),
         role: "assistant",
         text: response.answer,
-        meta: "asistente · ahora",
+        meta: `${response.model} · ahora`,
         sources: response.sources.map((s) => ({
           doc: s.document_name,
           page: s.page != null ? `pág. ${s.page}` : "—",

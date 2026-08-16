@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
 import { useThemeStore } from "../../stores/themeStore";
 import { useViewStore } from "../../stores/viewStore";
+import { useModelStore } from "../../stores/modelStore";
 import { listModels } from "../../services/api";
-import { DEFAULT_MODEL } from "../../data/mockModels";
 
 const USER_NAME = "Javier";
 
 export default function AccountMenu() {
   const { skin, mode, setSkin, setMode } = useThemeStore();
   const { view, setView } = useViewStore();
-  const [models, setModels] = useState<readonly string[]>([DEFAULT_MODEL]);
-  const [model, setModel] = useState<string>(DEFAULT_MODEL);
+  const { model, models, setModel, setAvailableModels } = useModelStore();
   const [loggedOut, setLoggedOut] = useState(false);
 
   useEffect(() => {
-    listModels().then(setModels);
-  }, []);
+    listModels().then((res) => setAvailableModels(res.models, res.default));
+  }, [setAvailableModels]);
 
   function handleLogout() {
     setLoggedOut(true);

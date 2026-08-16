@@ -1,4 +1,4 @@
-import { MOCK_MODELS } from "../data/mockModels";
+import { DEFAULT_MODEL } from "../data/mockModels";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
@@ -12,10 +12,17 @@ export async function health(): Promise<HealthResponse> {
   return res.json();
 }
 
-// Lista estática — no existe todavía GET /models en el backend.
-// Ver openspec/changes/chat-ui-shell/design.md, decisión 4.
-export async function listModels(): Promise<readonly string[]> {
-  return MOCK_MODELS;
+export interface ModelsResponse {
+  models: string[];
+  default: string;
+}
+
+export async function listModels(): Promise<ModelsResponse> {
+  const res = await fetch(`${API_URL}/models`);
+  if (!res.ok) {
+    return { models: [DEFAULT_MODEL], default: DEFAULT_MODEL };
+  }
+  return res.json();
 }
 
 export interface DocumentResponse {
@@ -92,6 +99,7 @@ export interface SourceResponse {
 export interface ChatApiResponse {
   answer: string;
   sources: SourceResponse[];
+  model: string;
 }
 
 export interface ErrorDocumentResponse {
@@ -129,11 +137,11 @@ export function getStatsByTag(): Promise<Record<string, number>> {
   return getJson("/stats/by-tag");
 }
 
-export async function sendChatMessage(message: string): Promise<ChatApiResponse> {
+export async function sendChatMessage(message: string, model: string): Promise<ChatApiResponse> {
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, model }),
   });
   if (!res.ok) {
     throw new Error(`Error ${res.status} al consultar el backend`);
