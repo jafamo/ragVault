@@ -23,6 +23,7 @@ build/
 /chroma_data/
 /data/
 /backend/data/
+/backups/
 
 # Editors
 .vscode/
