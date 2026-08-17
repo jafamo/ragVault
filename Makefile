@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 COMPOSE := docker compose
 
-.PHONY: help up down restart reload logs logs-backend logs-frontend ps build
+.PHONY: help up down restart reload logs logs-backend logs-frontend ps build backup restore
 
 help: ## Muestra esta ayuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -32,3 +32,22 @@ logs-backend: ## Logs solo del backend
 
 logs-frontend: ## Logs solo del frontend
 	$(COMPOSE) logs -f ragvault-frontend
+
+backup: ## Copia de seguridad de backend/data (BD SQLite + Chroma + ficheros subidos) en backups/
+	@mkdir -p backups
+	tar czf backups/ragvault-backup-$$(date +%Y%m%d-%H%M%S).tar.gz backend/data
+	@echo "Backup creado en backups/"
+
+restore: ## Restaura backend/data desde el último backup (o FILE=backups/xxx.tar.gz). Para los contenedores antes: make down
+	@FILE=$${FILE:-$$(ls -t backups/*.tar.gz 2>/dev/null | head -1)}; \
+	if [ -z "$$FILE" ]; then \
+		echo "No hay backups en backups/. Indica uno con FILE=backups/ragvault-backup-XXXXXXXX-XXXXXX.tar.gz"; \
+		exit 1; \
+	fi; \
+	echo "Esto SOBRESCRIBE backend/data/ con el contenido de $$FILE."; \
+	echo "Asegúrate de haber parado los contenedores (make down) para evitar escrituras a mitad de restauración."; \
+	read -p "¿Continuar? [y/N] " confirm; \
+	case "$$confirm" in \
+		[yY]) tar xzf "$$FILE" && echo "Restaurado desde $$FILE" ;; \
+		*) echo "Cancelado." ;; \
+	esac
