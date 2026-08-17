@@ -36,12 +36,28 @@ function nextId() {
   return `local-${counter}`;
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+function parseUtcIso(iso: string): Date {
+  // El backend serializa `created_at` como ISO sin sufijo de timezone
+  // (naive, pero en UTC) — sin esto, `new Date(iso)` lo interpretaría
+  // como hora local del navegador y desplazaría la hora mostrada por el
+  // offset local (p. ej. 2h en verano en España).
+  const hasTimezone = /Z$|[+-]\d{2}:?\d{2}$/.test(iso);
+  return new Date(hasTimezone ? iso : `${iso}Z`);
 }
 
-function fromApiMessage(m: MessageApiResponse): Message {
-  const time = formatTime(m.created_at);
+function formatDateTime(iso: string): string {
+  const date = parseUtcIso(iso);
+  const datePart = date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" });
+  const timePart = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  return `${datePart} ${timePart}`;
+}
+
+function formatDuration(ms: number): string {
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function fromApiMessage(m: MessageApiResponse, previousUserCreatedAt?: string): Message {
+  const time = formatDateTime(m.created_at);
   if (m.role === "user") {
     return { id: m.id, role: "user", text: m.content, meta: `tú · ${time}` };
   }
@@ -54,11 +70,14 @@ function fromApiMessage(m: MessageApiResponse): Message {
         })
       )
     : undefined;
+  const duration = previousUserCreatedAt
+    ? formatDuration(parseUtcIso(m.created_at).getTime() - parseUtcIso(previousUserCreatedAt).getTime())
+    : null;
   return {
     id: m.id,
     role: "assistant",
     text: m.content,
-    meta: `${m.model_used ?? "?"} · ${time}`,
+    meta: duration ? `${m.model_used ?? "?"} · ${time} · ${duration}` : `${m.model_used ?? "?"} · ${time}`,
     sources,
   };
 }
@@ -107,7 +126,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (get().loadedSessions[sessionId]) return;
     set((state) => ({ loadedSessions: { ...state.loadedSessions, [sessionId]: true } }));
 
-    const messages = (await getSessionMessages(sessionId)).map(fromApiMessage);
+    const apiMessages = await getSessionMessages(sessionId);
+    let previousUserCreatedAt: string | undefined;
+    const messages = apiMessages.map((m) => {
+      const message = fromApiMessage(m, previousUserCreatedAt);
+      if (m.role === "user") previousUserCreatedAt = m.created_at;
+      return message;
+    });
     set((state) => ({
       messagesBySession: { ...state.messagesBySession, [sessionId]: messages },
     }));
@@ -116,18 +141,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const trimmed = text.trim();
     if (!trimmed) return;
 
+    const sentAt = Date.now();
+    const nowIso = new Date(sentAt).toISOString();
     const userMessage: Message = {
       id: nextId(),
       role: "user",
       text: trimmed,
-      meta: "tú · ahora",
+      meta: `tú · ${formatDateTime(nowIso)}`,
     };
     const assistantId = nextId();
     const assistantMessage: Message = {
       id: assistantId,
       role: "assistant",
       text: "",
-      meta: "ahora",
+      meta: formatDateTime(nowIso),
       streaming: true,
     };
     set((state) => ({
@@ -160,10 +187,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }));
           },
           onDone: (payload) => {
+            const completedAt = Date.now();
+            const duration = formatDuration(completedAt - sentAt);
+            const completedTime = formatDateTime(new Date(completedAt).toISOString());
             set((state) => ({
               messagesBySession: updateMessage(state.messagesBySession, sessionId, assistantId, (m) => ({
                 ...m,
-                meta: `${payload.model} · ahora`,
+                meta: `${payload.model} · ${completedTime} · ${duration}`,
                 sources: sourcesFromDoneEvent(payload),
                 streaming: false,
               })),

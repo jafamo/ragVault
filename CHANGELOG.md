@@ -70,6 +70,11 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   panel: `TagFilter`, la zona de subida y el menú de cuenta quedan
   siempre visibles sin tener que desplazarse por las sesiones
   (`history-sidebar-message-preview`).
+- Cada mensaje del chat muestra ahora su fecha y hora reales (antes solo
+  la hora, y "ahora" como relleno mientras se enviaba/generaba), y el
+  mensaje del asistente muestra además cuánto ha tardado en responder,
+  medido desde que se envía la pregunta hasta que termina el stream
+  (`chat-message-timestamps`).
 
 ### Changed
 
