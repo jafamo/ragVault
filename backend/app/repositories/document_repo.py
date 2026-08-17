@@ -16,15 +16,29 @@ _SessionLocal = sessionmaker(bind=_engine)
 
 def init_db() -> None:
     """`create_all` no altera tablas ya existentes, así que las columnas
-    añadidas a `Document` tras el primer arranque (`size_bytes`,
-    `absolute_path`) se rellenan aquí con un `ALTER TABLE` idempotente.
-    El proyecto no tiene Alembic realmente configurado todavía pese a
-    mencionarlo en el stack objetivo; esto es un ajuste equivalente hasta
-    que exista ese setup."""
+    añadidas a `Document` tras el primer arranque (`status`,
+    `error_message`, `size_bytes`, `absolute_path`) se rellenan aquí con
+    un `ALTER TABLE` idempotente. El proyecto no tiene Alembic realmente
+    configurado todavía pese a mencionarlo en el stack objetivo; esto es
+    un ajuste equivalente hasta que exista ese setup.
+
+    `status` se backfillea a `'done'` (no al `'queued'` por defecto del
+    modelo) porque las filas ya existentes en una base de datos anterior
+    a esta columna se subieron con la ingesta síncrona original — todas
+    completadas por definición, nunca a medias. Las filas nuevas siguen
+    recibiendo `'queued'` explícitamente desde `DocumentRepository.create`
+    (ver `status="queued"` ahí), así que este valor por defecto a nivel
+    de columna solo afecta al backfill, no a la ingesta futura."""
     Base.metadata.create_all(_engine)
     inspector = inspect(_engine)
     existing_columns = {col["name"] for col in inspector.get_columns("documents")}
     with _engine.begin() as connection:
+        if "status" not in existing_columns:
+            connection.execute(
+                text("ALTER TABLE documents ADD COLUMN status VARCHAR DEFAULT 'done'")
+            )
+        if "error_message" not in existing_columns:
+            connection.execute(text("ALTER TABLE documents ADD COLUMN error_message VARCHAR"))
         if "size_bytes" not in existing_columns:
             connection.execute(text("ALTER TABLE documents ADD COLUMN size_bytes INTEGER"))
         if "absolute_path" not in existing_columns:

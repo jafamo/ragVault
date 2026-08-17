@@ -111,6 +111,14 @@ y este proyecto usa [Semantic Versioning](https://semver.org/lang/es/)
   valor fijo, acceder a la UI desde otro equipo de la LAN hacía que el
   navegador intentase llamar a su propio `localhost`, mostrando "Ollama no
   disponible" y "Failed to fetch" en el chat.
+- Bases de datos SQLite creadas antes de que existieran las columnas
+  `status`/`error_message` de `documents` (previas a
+  `document-ingestion-multiformat`) fallaban al arrancar con
+  `OperationalError: no such column: documents.status` al listar o subir
+  documentos, porque el `ALTER TABLE` idempotente de `init_db()` solo
+  contemplaba `size_bytes`/`absolute_path`. Las filas ya existentes se
+  backfillean a `status = 'done'` (se subieron con la ingesta síncrona
+  original, sin estados intermedios).
 
 ### Removed
 
